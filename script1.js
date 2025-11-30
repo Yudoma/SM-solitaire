@@ -67,20 +67,19 @@ function playPlacementSe(baseZoneId) {
 const loopSeInstances = {};
 
 function playSe(filename, isLoop = false) {
-
     if (typeof seConfig !== 'undefined' && seConfig[filename] === false) return;
 
     if (typeof seVolume !== 'undefined' && seVolume <= 0) return;
 
     const path = `./se/${filename}`;
     const audio = new Audio(path);
-
+    
     if (typeof seVolume !== 'undefined') {
         audio.volume = seVolume / 10;
     }
 
     if (isLoop) {
-        if (loopSeInstances[filename]) return;  
+        if (loopSeInstances[filename]) return;
         
         audio.loop = true;
         audio.play().catch(e => {
@@ -88,18 +87,14 @@ function playSe(filename, isLoop = false) {
         });
         loopSeInstances[filename] = audio;
     } else {
-         
         audio.onerror = () => {
-             
             if (filename !== 'ボタン共通.mp3') {
-                 
                 playSe('ボタン共通.mp3');
             }
         };
 
         audio.currentTime = 0;
         audio.play().catch(e => {
-             
             console.warn(`SE Play Error (${filename}):`, e);
         });
     }
@@ -116,23 +111,23 @@ function stopSe(filename) {
 
 function playBgm(filename) {
     if (currentBgmAudio && !currentBgmAudio.paused && currentBgmAudio.src.includes(encodeURIComponent(filename))) {
-        return;  
+        return;
     }
 
-    stopBgm();  
+    stopBgm();
 
     if (!filename) return;
-
+    
     if (typeof bgmVolume !== 'undefined' && bgmVolume <= 0) return;
 
     const path = `./bgm/${filename}`;
     currentBgmAudio = new Audio(path);
-
+    
     if (typeof bgmVolume !== 'undefined') {
         currentBgmAudio.volume = (bgmVolume / 10) * 0.5;
     }
     
-    currentBgmAudio.loop = true;  
+    currentBgmAudio.loop = true;
 
     currentBgmAudio.play().catch(e => console.error("BGM Play Error:", e));
 }
@@ -152,7 +147,6 @@ function stopBgm() {
 }
 
 function updateBgmVolume() {
-     
     if (currentBgmAudio && typeof bgmVolume !== 'undefined') {
         currentBgmAudio.volume = (bgmVolume / 10) * 0.5;
     }
@@ -166,7 +160,7 @@ function startReplayRecording() {
     actionLog = [];
     replayStartTime = Date.now();
     replayInitialState = getAllBoardState(); 
-
+    
     const startBtn = document.getElementById('record-start-btn');
     const stopBtn = document.getElementById('record-stop-btn');
     if(startBtn) startBtn.style.display = 'none';
@@ -178,7 +172,7 @@ function startReplayRecording() {
 function stopReplayRecording() {
     if (!isRecording) return;
     isRecording = false;
-
+    
     const startBtn = document.getElementById('record-start-btn');
     const stopBtn = document.getElementById('record-stop-btn');
     if(startBtn) startBtn.style.display = 'inline-block';
@@ -251,7 +245,6 @@ function importReplayData() {
                     }
 
                     alert(`「${file.name}」を読み込みました。\n再生ボタンで開始します。`);
-                     
                     updateReplayUI('stopped');
                 } else {
                     alert("無効なリプレイデータ形式です。");
@@ -284,7 +277,7 @@ function updateReplayUI(state) {
         }
         if(pauseBtn) pauseBtn.style.display = 'none';
         if(stopBtn) stopBtn.style.display = 'inline-block';
-    } else {  
+    } else {
         if(playBtn) {
             playBtn.style.display = 'inline-block';
             playBtn.textContent = '再生';
@@ -330,7 +323,7 @@ function resumeReplay() {
     if (!isPlaying || !isReplayPaused) return;
     isReplayPaused = false;
     updateReplayUI('playing');
-
+    
     processNextReplayStep(100);
 }
 
@@ -359,15 +352,12 @@ function processNextReplayStep(forceDelay = null) {
     if (forceDelay !== null) {
         delay = forceDelay;
     } else {
-         
         const waitTimeInput = document.getElementById('replay-wait-time-input');
         const fixedWaitTime = waitTimeInput && waitTimeInput.value !== "" ? parseFloat(waitTimeInput.value) * 1000 : null;
 
         if (fixedWaitTime !== null && !isNaN(fixedWaitTime)) {
-             
             delay = fixedWaitTime;
         } else {
-             
             const currentActionTime = actionLog[currentReplayIndex].time;
             const prevActionTime = currentReplayIndex > 0 ? actionLog[currentReplayIndex - 1].time : 0;
             const rawDiff = currentActionTime - prevActionTime;
@@ -430,7 +420,7 @@ function executeAction(action) {
                     const toBase = getBaseId(getParentZoneId(toSlot));
                     if (toBase === 'grave' || toBase === 'grave-back-slots') playSe('墓地に送る.mp3');
                     else if (toBase === 'exclude' || toBase === 'exclude-back-slots') playSe('除外する.mp3');
-                    else playPlacementSe(toBase);  
+                    else playPlacementSe(toBase);
 
                     updatePreviewForAction(action.toZone, action.toSlotIndex);
                 }
@@ -443,7 +433,7 @@ function executeAction(action) {
                 const prefix = getPrefixFromZoneId(action.zoneId);
                 createCardThumbnail(action.cardData, slot, false, false, prefix);
                 updateSlotStackState(slot);
-
+                
                 const baseId = getBaseId(getParentZoneId(slot));
                 playPlacementSe(baseId);
                 
@@ -585,7 +575,7 @@ function executeAction(action) {
                     if (action.isBlocker) {
                         card.dataset.isBlocker = 'true';
                         addBlockerOverlay(card);
-                        playSe('ブロッカー.wav');
+                        playSe('ブロッカー.mp3');
                     } else {
                         card.dataset.isBlocker = 'false';
                         removeBlockerOverlay(card);
@@ -606,11 +596,9 @@ function executeAction(action) {
                     if(action.subType === 'attack') {
                         playSe('アタック.mp3');
                     } else if(action.subType === 'effect') {
-                         
                         const zoneId = getParentZoneId(card.parentNode);
                         const baseZoneId = getBaseId(zoneId);
                         if (baseZoneId.startsWith('mana')) {
-                             
                         } else if (baseZoneId === 'spell') {
                             playSe('スペル効果発動.mp3');
                         } else {
@@ -657,7 +645,6 @@ function executeAction(action) {
         case 'stepChange': {
             currentStepIndex = action.index;
             updateStepUI();
-             
             if (action.index === 0) {
                 playSe('ターン開始.mp3');
             } else {
@@ -678,7 +665,6 @@ function executeAction(action) {
             break;
         }
         case 'boardFlip': {
-             
             break; 
         }
         case 'autoDecreaseToggle': {
@@ -725,11 +711,9 @@ function executeAction(action) {
             break;
         }
         case 'effectAction':
-            console.log('Replay: Effect Action Triggered (Legacy)');
             playSe('効果発動.mp3');
             break;
         case 'target':
-             console.log('Replay: Target Action Triggered (Legacy)');
             playSe('対象に取る.mp3');
             break;
     }

@@ -1,3 +1,65 @@
+// --- PNGデータ抽出関連の関数 ---
+
+// PNGファイルからメタデータを非同期で抽出する関数
+async function extractCardDataFromPng(file) {
+    if (!file) return null;
+    
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+
+        // "smCardData"というキーを持つtEXtチャンクを探す
+        const textChunk = findPngChunk(bytes, 'tEXt');
+        if (!textChunk) return null;
+
+        // チャンクデータをデコード
+        const decoder = new TextDecoder('utf-8');
+        const chunkText = decoder.decode(textChunk);
+
+        // キーと値に分離 (null文字で区切られている)
+        const separatorIndex = chunkText.indexOf('\0');
+        if (separatorIndex === -1) return null;
+
+        const key = chunkText.substring(0, separatorIndex);
+        const value = chunkText.substring(separatorIndex + 1);
+
+        if (key === 'smCardData') {
+            return JSON.parse(value);
+        }
+
+        return null;
+    } catch (e) {
+        console.error("PNGメタデータの解析に失敗しました:", e);
+        return null;
+    }
+}
+
+// PNGのバイトデータから特定のチャンクを見つけるヘルパー関数
+function findPngChunk(bytes, type) {
+    // PNGシグネチャをスキップ
+    let offset = 8;
+    
+    while (offset < bytes.length) {
+        // チャンクの長さを読み込む (4バイト)
+        const view = new DataView(bytes.buffer);
+        const length = view.getUint32(offset, false);
+        
+        // チャンクタイプを読み込む (4バイト)
+        const chunkType = String.fromCharCode.apply(null, bytes.subarray(offset + 4, offset + 8));
+
+        if (chunkType === type) {
+            // チャンクデータを返す
+            return bytes.subarray(offset + 8, offset + 8 + length);
+        }
+        
+        // 次のチャンクへ移動 (Length + Type + Data + CRC = 4 + 4 + length + 4 = 12 + length)
+        offset += 12 + length;
+    }
+    
+    return null;
+}
+
+
 const DEFAULT_CARD_MEMO = `[カード名:-]/#e0e0e0/#555/1.0/非表示/
 [属性:-]/#e0e0e0/#555/1.0/非表示/
 [マナ:-]/#e0e0e0/#555/1.0/非表示/
@@ -6,7 +68,6 @@ const DEFAULT_CARD_MEMO = `[カード名:-]/#e0e0e0/#555/1.0/非表示/
 [フレーバーテキスト:-]/#fff/#555/1.0/非表示/
 [効果:-]/#e0e0e0/#555/0.7/非表示/`;
 
-// 配置SE再生ヘルパー
 function playPlacementSe(baseZoneId) {
     if (baseZoneId === 'spell') {
         playSe('スペル配置.mp3');
@@ -21,20 +82,17 @@ function playPlacementSe(baseZoneId) {
     }
 }
 
-// マナコスト自動消費ヘルパー
 function tryAutoManaCost(memo, idPrefix) {
     if (typeof autoConfig === 'undefined' || !autoConfig.autoManaCost) return;
     if (!memo) return;
     
-    // [マナ:数字] または [コスト:数字] を検索
-    const match = memo.match(/\[(?:マナ|コスト):([0-9]+)\]/);
+    const match = memo.match(/\[マナ:([0-9]+)\]/);
     if (match) {
         const cost = parseInt(match[1]);
         if (cost > 0) {
             const manaInput = document.getElementById(idPrefix + 'mana-counter-value');
             if (manaInput) {
                 const current = parseInt(manaInput.value) || 0;
-                // マイナスにはしない
                 const change = -Math.min(current, cost);
                 
                 if (change !== 0) {
@@ -52,7 +110,6 @@ function tryAutoManaCost(memo, idPrefix) {
     }
 }
 
-// マナ配置時自動タップヘルパー
 function tryAutoManaTapIn(slotElement, idPrefix, zoneId) {
     if (typeof autoConfig === 'undefined' || !autoConfig.autoManaTapInZone) return;
     
@@ -62,7 +119,6 @@ function tryAutoManaTapIn(slotElement, idPrefix, zoneId) {
     const img = card.querySelector('.card-image');
     if (!img) return;
 
-    // 既に回転していなければ回転させる
     const currentRotation = parseInt(img.dataset.rotation) || 0;
     if (currentRotation === 0) {
         const newRotation = 90;
@@ -92,7 +148,6 @@ function addSlotEventListeners(slot) {
 }
 
 function handleSlotContextMenu(e) {
-    // バトルターゲット選択モード中はメニューを出さない
     if (typeof isBattleTargetMode !== 'undefined' && isBattleTargetMode) {
         e.preventDefault();
         e.stopPropagation();
@@ -100,10 +155,8 @@ function handleSlotContextMenu(e) {
     }
     
     const slot = e.currentTarget;
-    // カードがある場合はカード側のコンテキストメニューが出るので何もしない
     if (slot.querySelector('.thumbnail')) return;
 
-    // 装飾対象ゾーン（デッキ、墓地、除外、EX、アイコン）かどうか判定
     const zoneId = getParentZoneId(slot);
     const baseZoneId = getBaseId(zoneId);
     const isDecorationZone = ['deck', 'grave', 'exclude', 'side-deck', 'icon-zone'].includes(baseZoneId);
@@ -113,10 +166,8 @@ function handleSlotContextMenu(e) {
 
     if (typeof contextMenu === 'undefined') return;
 
-    // メニュー項目の表示制御: 装飾対象なら「スタイルの変更」、それ以外は「インポート」を表示
     Array.from(contextMenu.querySelectorAll('li')).forEach(li => li.style.display = 'none');
     
-    // 親メニュー（has-submenu）も非表示にする
     const topItems = contextMenu.querySelectorAll('#custom-context-menu > ul > li');
     topItems.forEach(li => li.style.display = 'none');
 
@@ -127,16 +178,13 @@ function handleSlotContextMenu(e) {
         const importItem = document.getElementById('context-menu-import');
         if (importItem) {
             importItem.style.display = 'block';
-            // ui.js の currentImportCardHandler を設定
             currentImportCardHandler = () => importCardToSlot(slot);
         }
     }
 
-    // メニュー表示と位置計算
     contextMenu.style.display = 'block';
     contextMenu.style.visibility = 'hidden';
     
-    // サブメニュー展開クラスのリセット
     const submenus = contextMenu.querySelectorAll('.submenu');
     submenus.forEach(sub => sub.classList.remove('open-left', 'open-top'));
 
@@ -148,12 +196,10 @@ function handleSlotContextMenu(e) {
     let left = e.pageX;
     let top = e.pageY;
 
-    // 右にはみ出す場合
     if (left + menuWidth > windowWidth) {
         left -= menuWidth;
     }
 
-    // 下にはみ出す場合
     if (top + menuHeight > windowHeight) {
         top -= menuHeight;
     }
@@ -184,15 +230,19 @@ function importCardToSlot(slot) {
                 const baseZoneId = getBaseId(zoneId);
                 const owner = (baseZoneId === 'c-free-space') ? '' : idPrefix;
                 
-                // インポート先の所有権を適用
                 cardData.ownerPrefix = owner;
                 
-                createCardThumbnail(cardData, slot, false, false, owner);
+                const thumb = createCardThumbnail(cardData, slot, false, false, owner);
+                
+                // プレイマット用画像の場合はタイムスタンプを付与
+                if (baseZoneId === 'extra-image-zone') {
+                    thumb.dataset.timestamp = Date.now();
+                }
+
                 updateSlotStackState(slot);
                 
                 const isMana = baseZoneId.startsWith('mana');
                 
-                // 自動マナ消費 (インポート時も一応適用)
                 const targetZonesForCost = ['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'];
                 const isTargetZone = targetZonesForCost.some(z => baseZoneId.includes(z));
                 if (isTargetZone) {
@@ -201,7 +251,6 @@ function importCardToSlot(slot) {
 
                 if (isMana) {
                     playSe('マナ配置.mp3');
-                    // 自動処理設定チェック: マナ配置時+1
                     if (autoConfig.autoManaPlacement) {
                         const manaInput = document.getElementById(idPrefix + 'mana-counter-value');
                         if (manaInput) {
@@ -215,7 +264,6 @@ function importCardToSlot(slot) {
                             }
                         }
                     }
-                    // 自動処理設定チェック: マナ配置時タップイン
                     tryAutoManaTapIn(slot, idPrefix, zoneId);
                 } else {
                     playPlacementSe(baseZoneId);
@@ -232,6 +280,10 @@ function importCardToSlot(slot) {
                 
                 if (zoneId.endsWith('-back-slots') || baseZoneId === 'c-free-space') {
                     arrangeSlots(zoneId);
+                }
+
+                if (typeof window.updatePlaymatState === 'function') {
+                    window.updatePlaymatState();
                 }
                 
             } catch (err) {
@@ -252,23 +304,19 @@ function importCardToSlot(slot) {
 function handleSlotClick(e) {
     const slot = e.currentTarget;
     
-    // --- バトルターゲット選択モード ---
     if (typeof isBattleTargetMode !== 'undefined' && isBattleTargetMode) {
         e.stopPropagation();
         
-        // ターゲットが有効かチェック（カードがある、またはプレイヤーアイコンである）
         const isPlayerIcon = slot.id === 'icon-zone' || slot.id === 'opponent-icon-zone';
         const hasCard = slot.querySelector('.thumbnail');
 
         if (hasCard || isPlayerIcon) {
-            // バトル確認画面を開く
             if (typeof openBattleConfirmModal === 'function') {
                 openBattleConfirmModal(currentAttacker, slot);
             }
         }
         return;
     }
-    // ----------------------------------
 
     const parentZoneId = getParentZoneId(slot);
     const baseParentZoneId = getBaseId(parentZoneId);
@@ -276,7 +324,6 @@ function handleSlotClick(e) {
     const drawerOpeningZones = ['deck', 'grave', 'exclude', 'side-deck'];
     
     if (drawerOpeningZones.includes(baseParentZoneId)) {
-        // 通常のクリックでは何もしない（board.js側でドロワーを開く処理がある）
         return;
     }
 
@@ -284,7 +331,6 @@ function handleSlotClick(e) {
         return;
     }
 
-    // カードがある場合は、カード側のクリックイベントに任せる
     if (slot.querySelector('.thumbnail')) {
         return;
     }
@@ -292,7 +338,7 @@ function handleSlotClick(e) {
     const allowedZonesForNormalModeFileDrop = [
         'hand-zone', 'battle', 'spell', 'special1', 'special2', 'free-space-slots',
         'deck-back-slots', 'grave-back-slots', 'exclude-back-slots', 'side-deck-back-slots', 'token-zone-slots',
-        'c-free-space'
+        'c-free-space', 'extra-image-zone'
     ];
 
     if (allowedZonesForNormalModeFileDrop.includes(baseParentZoneId) || (baseParentZoneId && baseParentZoneId.startsWith('mana'))) {
@@ -313,21 +359,23 @@ function handleSlotClick(e) {
                     const imageData = readEvent.target.result;
                     const owner = (baseParentZoneId === 'c-free-space') ? '' : idPrefix;
                     
-                    // デフォルトメモを適用してカード作成
-                    createCardThumbnail({
+                    const thumb = createCardThumbnail({
                         src: imageData,
                         memo: DEFAULT_CARD_MEMO,
                         ownerPrefix: owner
                     }, slot, false, false, owner);
                     
+                    // プレイマット用画像の場合はタイムスタンプを付与
+                    if (baseParentZoneId === 'extra-image-zone') {
+                        thumb.dataset.timestamp = Date.now();
+                    }
+                    
                     if (baseParentZoneId === 'c-free-space') {
-                        const thumb = slot.querySelector('.thumbnail');
                         if (thumb) delete thumb.dataset.ownerPrefix;
                     }
 
                     updateSlotStackState(slot);
                     
-                    // 自動マナ消費 (ファイルからの新規作成時)
                     const targetZonesForCost = ['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'];
                     const isTargetZone = targetZonesForCost.some(z => baseParentZoneId.includes(z));
                     if (isTargetZone) {
@@ -337,7 +385,6 @@ function handleSlotClick(e) {
                     const isMana = baseParentZoneId.startsWith('mana');
                     if (isMana) {
                         playSe('マナ配置.mp3');
-                        // 自動処理設定チェック
                         if (autoConfig.autoManaPlacement) {
                             const manaInput = document.getElementById(idPrefix + 'mana-counter-value');
                             if (manaInput) {
@@ -351,7 +398,6 @@ function handleSlotClick(e) {
                                 }
                             }
                         }
-                        // 自動処理設定チェック: マナ配置時タップイン
                         tryAutoManaTapIn(slot, idPrefix, parentZoneId);
                     } else {
                         playPlacementSe(baseParentZoneId);
@@ -367,6 +413,10 @@ function handleSlotClick(e) {
                                 memo: DEFAULT_CARD_MEMO
                             }
                         });
+                    }
+
+                    if (typeof window.updatePlaymatState === 'function') {
+                        window.updatePlaymatState();
                     }
                 };
                 reader.readAsDataURL(file);
@@ -416,7 +466,6 @@ function handleDropOnSlot(e) {
 
     const idPrefix = getPrefixFromZoneId(getParentZoneId(slot));
 
-    // ストック装飾からのドロップ判定
     if (typeof draggedItem !== 'undefined' && draggedItem && draggedItem.dataset.isStockDecoration === 'true') {
         handleStockDecorationDrop(draggedItem, slot, idPrefix);
         return;
@@ -440,11 +489,9 @@ function handleStockDecorationDrop(stockItem, targetSlot, idPrefix) {
     const targetParentZoneId = getParentZoneId(targetSlot);
     const targetParentBaseId = getBaseId(targetParentZoneId);
     
-    // アイコンゾーン、またはデッキ等の装飾対象ゾーンのみ許可
     const validTargets = ['icon-zone', 'deck', 'grave', 'exclude', 'side-deck'];
     if (!validTargets.includes(targetParentBaseId)) return;
 
-    // アイコンゾーンならデフォルトメモを設定
     let memoToSet = '';
     if (targetParentBaseId === 'icon-zone') {
         memoToSet = DEFAULT_CARD_MEMO;
@@ -456,7 +503,6 @@ function handleStockDecorationDrop(stockItem, targetSlot, idPrefix) {
         if (existingImg) existingImg.src = imageData;
         if (memoToSet) existingThumbnail.dataset.memo = memoToSet;
     } else {
-        // 既存の通常サムネイルがあれば削除 (装飾モードなので置き換え)
         const anyExistingThumbnail = getExistingThumbnail(targetSlot);
         if (anyExistingThumbnail) targetSlot.removeChild(anyExistingThumbnail);
         
@@ -480,7 +526,6 @@ function handleStockDecorationDrop(stockItem, targetSlot, idPrefix) {
             zoneId: targetParentZoneId,
             imageData: imageData
         });
-        // アイコンの場合はメモも記録
         if (memoToSet) {
              const slotIndex = Array.from(targetSlot.parentNode.children).indexOf(targetSlot);
              recordAction({
@@ -491,226 +536,110 @@ function handleStockDecorationDrop(stockItem, targetSlot, idPrefix) {
             });
         }
     }
+
+    if (typeof window.updatePlaymatState === 'function') {
+        window.updatePlaymatState();
+    }
 }
 
-function handleFileDrop(e, targetSlot, idPrefix) {
+async function handleFileDrop(e, targetSlot, idPrefix) {
     const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
     if (files.length === 0) return;
 
-    const targetParentZoneId = getParentZoneId(targetSlot);
-    const targetParentBaseId = getBaseId(targetParentZoneId);
+    const processFile = async (file, currentSlot) => {
+        const cardData = await extractCardDataFromPng(file);
+        let memo = DEFAULT_CARD_MEMO;
 
-    // アイコンゾーンへのファイルドロップは装飾として扱い、デフォルトメモを付与する
-    if (targetParentBaseId === 'icon-zone') {
-        const file = files[0];
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const imageData = event.target.result;
-            const existingThumbnail = targetSlot.querySelector('.thumbnail[data-is-decoration="true"]');
+        if (cardData) {
+            // BP/スペルの判定
+            const isNumericBp = /^\d+$/.test(cardData.bp.trim());
+            const bpText = cardData.bp.trim() === '' ? '[BP:-]' : (isNumericBp ? `[BP:${cardData.bp}]` : `[スペル:${cardData.bp}]`);
+            
+            memo = `[カード名:${cardData.cardName}]////非表示/
+[属性:${cardData.attribute}]////非表示/
+[マナ:${cardData.mana}]////非表示/
+${bpText}////非表示/
+[効果:${cardData.effect}]////非表示/
+[フレーバーテキスト:${cardData.flavor}]////非表示/`;
+        }
+
+        const imageUrl = URL.createObjectURL(file);
+        const targetParentZoneId = getParentZoneId(currentSlot);
+        const targetParentBaseId = getBaseId(targetParentZoneId);
+
+        // --- 各ゾーンごとのカード作成処理 ---
+
+        if (targetParentBaseId === 'icon-zone') {
+            const existingThumbnail = currentSlot.querySelector('.thumbnail[data-is-decoration="true"]');
             if (existingThumbnail) {
                 const existingImg = existingThumbnail.querySelector('img');
-                if (existingImg) existingImg.src = imageData;
-                existingThumbnail.dataset.memo = DEFAULT_CARD_MEMO;
+                if (existingImg) existingImg.src = imageUrl;
+                existingThumbnail.dataset.memo = memo;
             } else {
-                const anyExistingThumbnail = getExistingThumbnail(targetSlot);
-                if (anyExistingThumbnail) targetSlot.removeChild(anyExistingThumbnail);
-                createCardThumbnail({
-                    src: imageData,
-                    isDecoration: true,
-                    memo: DEFAULT_CARD_MEMO,
-                    ownerPrefix: idPrefix
-                }, targetSlot, true, false, idPrefix);
+                createCardThumbnail({ src: imageUrl, isDecoration: true, memo: memo, ownerPrefix: idPrefix }, currentSlot, true, false, idPrefix);
             }
-            playSe('カードを配置する.mp3');
-
-            if (isRecording && typeof recordAction === 'function') {
-                recordAction({
-                    type: 'updateDecoration',
-                    zoneId: targetParentZoneId,
-                    imageData: imageData
-                });
-                recordAction({
-                    type: 'memoChange',
-                    zoneId: targetParentZoneId,
-                    cardIndex: 0,
-                    memo: DEFAULT_CARD_MEMO
-                });
-            }
-        };
-        reader.readAsDataURL(file);
-        return;
-    }
-
-    const pileZones = ['deck', 'grave', 'exclude', 'side-deck'];
-    const isPileZone = pileZones.includes(targetParentBaseId);
-
-    const isDirectBoardSlot = !targetParentBaseId.endsWith('-back-slots') 
-                              && targetParentBaseId !== 'hand-zone' 
-                              && targetParentBaseId !== 'free-space-slots'
-                              && targetParentBaseId !== 'token-zone-slots'
-                              && targetParentBaseId !== 'c-free-space'
-                              && !isPileZone;
-
-    if (isDirectBoardSlot) {
-        const file = files[0]; 
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const isTargetStackable = stackableZones.includes(targetParentBaseId);
-                const existingThumbnail = getExistingThumbnail(targetSlot);
-                
-                if (!isTargetStackable && existingThumbnail) {
-                    targetSlot.removeChild(existingThumbnail);
-                    resetSlotToDefault(targetSlot);
-                }
-                
-                const imageData = event.target.result;
-                // デフォルトメモ適用
-                createCardThumbnail({
-                    src: imageData,
-                    memo: DEFAULT_CARD_MEMO,
-                    ownerPrefix: idPrefix
-                }, targetSlot, false, false, idPrefix);
-                
-                if (isTargetStackable) {
-                    updateSlotStackState(targetSlot);
-                }
-                
-                // 自動マナ消費
-                const targetZonesForCost = ['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'];
-                const isTargetZone = targetZonesForCost.some(z => targetParentBaseId.includes(z));
-                if (isTargetZone) {
-                    tryAutoManaCost(DEFAULT_CARD_MEMO, idPrefix);
-                }
-
-                const isMana = targetParentBaseId.startsWith('mana');
-                if (isMana) {
-                    playSe('マナ配置.mp3');
-                    const manaInput = document.getElementById(idPrefix + 'mana-counter-value');
-                    if (manaInput) {
-                        manaInput.value = parseInt(manaInput.value || 0) + 1;
-                        if (isRecording && typeof recordAction === 'function') {
-                            recordAction({
-                                type: 'counterChange',
-                                inputId: idPrefix + 'mana-counter-value',
-                                change: 1
-                            });
-                        }
-                    }
-                    // マナ配置時タップイン
-                    tryAutoManaTapIn(targetSlot, idPrefix, targetParentZoneId);
-                } else {
-                    playPlacementSe(targetParentBaseId);
-                }
-
-                if (isRecording && typeof recordAction === 'function') {
-                    recordAction({
-                        type: 'newCard',
-                        zoneId: targetParentZoneId,
-                        slotIndex: Array.from(targetSlot.parentNode.children).indexOf(targetSlot),
-                        cardData: {
-                            src: imageData,
-                            memo: DEFAULT_CARD_MEMO
-                        }
-                    });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    } else {
-        
-        const addFilesToContainer = (fileList, containerId) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            let slotsContainer = container.querySelector('.deck-back-slot-container, .free-space-slot-container, .token-slot-container') || container;
-            const allSlots = Array.from(slotsContainer.querySelectorAll('.card-slot'));
-            const availableSlots = allSlots.filter(s => !s.querySelector('.thumbnail'));
-            
-            fileList.forEach((file, index) => {
-                if (availableSlots[index]) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const imageData = event.target.result;
-                        // バンクならPrefixなし
-                        const owner = (containerId === 'c-free-space') ? '' : idPrefix;
-                        // デフォルトメモ適用
-                        createCardThumbnail({
-                            src: imageData,
-                            memo: DEFAULT_CARD_MEMO,
-                            ownerPrefix: owner
-                        }, availableSlots[index], false, false, owner);
-                        
-                        if (containerId === 'c-free-space') {
-                            const thumb = availableSlots[index].querySelector('.thumbnail');
-                            if (thumb) delete thumb.dataset.ownerPrefix;
-                        }
-                        
-                        if (isRecording && typeof recordAction === 'function') {
-                            const slotIndex = allSlots.indexOf(availableSlots[index]);
-                            recordAction({
-                                type: 'newCard',
-                                zoneId: containerId,
-                                slotIndex: slotIndex,
-                                cardData: {
-                                    src: imageData,
-                                    memo: DEFAULT_CARD_MEMO
-                                }
-                            });
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            if (fileList.length > 0) {
-                const baseId = getBaseId(containerId).replace('-back-slots', '');
-                playPlacementSe(baseId);
-            }
-
-            setTimeout(() => {
-                arrangeSlots(containerId);
-                const baseId = getBaseId(containerId).replace('-back-slots', '');
-                if (['deck', 'grave', 'exclude', 'side-deck'].includes(baseId)) {
-                    syncMainZoneImage(baseId, idPrefix);
-                }
-            }, 100);
-        };
-
-        if (targetParentBaseId === 'hand-zone') {
-            const handContainerId = idPrefix + 'hand-zone';
-            const handContainer = document.getElementById(handContainerId);
-            const availableHandSlots = Array.from(handContainer.querySelectorAll('.card-slot')).filter(s => !s.querySelector('.thumbnail'));
-            
-            const filesForHand = files.slice(0, availableHandSlots.length);
-            const filesForDeck = files.slice(availableHandSlots.length);
-            
-            if (filesForHand.length > 0) {
-                addFilesToContainer(filesForHand, handContainerId);
-            }
-            
-            if (filesForDeck.length > 0) {
-                addFilesToContainer(filesForDeck, idPrefix + 'deck-back-slots');
-            }
-            
         } else {
-            let destinationId;
-            
-            if (isPileZone) {
-                destinationId = idPrefix + targetParentBaseId + '-back-slots';
-            } else if (targetParentBaseId.endsWith('-back-slots') || targetParentBaseId === 'free-space-slots' || targetParentBaseId === 'token-zone-slots' || targetParentBaseId === 'c-free-space') {
-                destinationId = targetParentZoneId;
-            } else {
-                destinationId = idPrefix + 'deck-back-slots'; 
+            const isTargetStackable = stackableZones.includes(targetParentBaseId);
+            const existingThumbnail = getExistingThumbnail(currentSlot);
+            if (!isTargetStackable && existingThumbnail) {
+                currentSlot.removeChild(existingThumbnail);
+                resetSlotToDefault(currentSlot);
             }
-            
-            addFilesToContainer(files, destinationId);
+             createCardThumbnail({ src: imageUrl, memo: memo, ownerPrefix: idPrefix }, currentSlot, false, false, idPrefix);
+            if (isTargetStackable) {
+                updateSlotStackState(currentSlot);
+            }
+        }
+        
+        // --- 後処理 ---
+        playPlacementSe(targetParentBaseId);
+        if (targetParentBaseId.startsWith('mana')) {
+            tryAutoManaTapIn(currentSlot, idPrefix, targetParentZoneId);
+        }
+        if (['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'].some(z => targetParentBaseId.includes(z))) {
+            tryAutoManaCost(memo, idPrefix);
+        }
+        if (typeof window.updatePlaymatState === 'function') {
+            window.updatePlaymatState();
+        }
+    };
+
+    const targetParentZoneId = getParentZoneId(targetSlot);
+    const targetParentBaseId = getBaseId(targetParentZoneId);
+    const isSlotSpecificDrop = targetSlot.classList.contains('card-slot');
+
+    if (isSlotSpecificDrop && !targetParentBaseId.endsWith('-back-slots') && !targetParentBaseId.includes('free-space')) {
+         // 個別のスロットへのドロップ (ただしドロワーの汎用エリアは除く)
+        await processFile(files[0], targetSlot);
+    } else {
+         // ドロワーなど、空きスロットに順番に配置するゾーンへのドロップ
+        const container = document.getElementById(targetParentZoneId);
+        if (!container) return;
+        
+        let slotsContainer = container.querySelector('.deck-back-slot-container, .free-space-slot-container, .token-slot-container');
+        if (!slotsContainer) return; // スロットコンテナがなければ何もしない
+
+        const allSlots = Array.from(slotsContainer.querySelectorAll('.card-slot'));
+        let availableSlots = allSlots.filter(s => !s.querySelector('.thumbnail'));
+
+        // ドロップ対象のスロットが空なら、そこを優先的に使う
+        if (targetSlot.classList.contains('card-slot') && !getExistingThumbnail(targetSlot)) {
+            const isTargetInAvailable = availableSlots.some(s => s === targetSlot);
+            if (isTargetInAvailable) {
+                availableSlots = [targetSlot, ...availableSlots.filter(s => s !== targetSlot)];
+            }
+        }
+        
+        for (let i = 0; i < files.length; i++) {
+            if (availableSlots[i]) {
+                await processFile(files[i], availableSlots[i]);
+            }
         }
     }
 }
 
 function handleCardDrop(draggedItem, targetSlot, idPrefix) {
-    if (draggedItem.dataset.isDecoration === 'true') return; // 通常のカード移動では装飾カードは動かさない（ストックからのドロップは別処理）
+    if (draggedItem.dataset.isDecoration === 'true') return;
 
     const sourceSlot = draggedItem.parentNode;
     const sourceZoneId = getParentZoneId(sourceSlot);
@@ -721,7 +650,6 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
 
     if (sourceSlot === targetSlot) return;
 
-    // ★バトル確認中のカードが移動したらバトル強制終了
     if (typeof isBattleConfirmMode !== 'undefined' && isBattleConfirmMode) {
         if (draggedItem === currentAttacker || draggedItem === currentBattleTarget) {
             if (typeof closeBattleConfirmModal === 'function') {
@@ -734,7 +662,6 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
     const fromZoneId = sourceZoneId;
     const fromSlotIndex = Array.from(sourceSlot.parentNode.children).indexOf(sourceSlot);
 
-    // トークンエリアからのドロップのみ「複製」
     if (sourceBaseZoneId === 'token-zone-slots') {
         const imgElement = draggedItem.querySelector('.card-image');
         const src = imgElement ? imgElement.src : '';
@@ -743,7 +670,6 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
         const flavor2 = draggedItem.dataset.flavor2 || '';
         const customCounters = JSON.parse(draggedItem.dataset.customCounters || '[]');
         
-        // 複製時の所有者はターゲット先の盤面に合わせる
         const newOwnerPrefix = (targetBaseZoneId === 'c-free-space') ? '' : idPrefix;
 
         const cardData = {
@@ -791,22 +717,24 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
             destSlot = targetSlot;
         }
 
-        createCardThumbnail(cardData, destSlot, false, false, newOwnerPrefix);
+        const thumb = createCardThumbnail(cardData, destSlot, false, false, newOwnerPrefix);
         
-        // バンクへの複製ならownerPrefixを消す
+        // プレイマット用画像の場合はタイムスタンプを付与
+        if (targetBaseZoneId === 'extra-image-zone') {
+            thumb.dataset.timestamp = Date.now();
+        }
+        
         if (targetBaseZoneId === 'c-free-space') {
             const thumb = destSlot.querySelector('.thumbnail:last-child');
             if(thumb) delete thumb.dataset.ownerPrefix;
         }
         
-        // 自動マナ消費 (トークン生成時もコストがかかるとみなす場合)
         const targetZonesForCost = ['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'];
         const isTargetZone = targetZonesForCost.some(z => targetBaseZoneId.includes(z));
         if (isTargetZone) {
             tryAutoManaCost(memo, idPrefix);
         }
 
-        // 配置SE分岐
         if (targetBaseZoneId.startsWith('mana')) {
              if (autoConfig.autoManaPlacement) {
                 const manaInput = document.getElementById(idPrefix + 'mana-counter-value');
@@ -842,26 +770,26 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
         if (destBaseId.endsWith('-back-slots') || destBaseId === 'hand-zone' || destBaseId === 'free-space-slots' || destBaseId === 'c-free-space') {
             arrangeSlots(destZoneId);
         }
-        // 複製先のカウント更新
         const mainBaseId = destBaseId.replace('-back-slots', '');
         if (['deck', 'grave', 'exclude', 'side-deck'].includes(mainBaseId)) {
             syncMainZoneImage(mainBaseId, idPrefix);
         }
 
+        if (typeof window.updatePlaymatState === 'function') {
+            window.updatePlaymatState();
+        }
+
         return;
     }
 
-    // 通常移動（バンク含む）
     const isGrave = targetBaseZoneId === 'grave' || targetBaseZoneId === 'grave-back-slots';
     const isExclude = targetBaseZoneId === 'exclude' || targetBaseZoneId === 'exclude-back-slots';
     const isMana = targetBaseZoneId.startsWith('mana');
     
-    // 自動マナ消費判定
     const costSourceZones = ['hand-zone', 'deck', 'deck-back-slots', 'grave', 'grave-back-slots', 'exclude', 'exclude-back-slots', 'side-deck', 'side-deck-back-slots'];
     const targetZonesForCost = ['special1', 'battle', 'special2', 'spell', 'mana', 'mana-left', 'mana-right'];
     
     if (costSourceZones.includes(sourceBaseZoneId)) {
-        // ターゲットがコスト消費対象のゾーンか確認
         const isTargetCostZone = targetZonesForCost.some(z => targetBaseZoneId.includes(z));
         if (isTargetCostZone) {
             tryAutoManaCost(draggedItem.dataset.memo, idPrefix);
@@ -908,7 +836,7 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
         return;
     }
 
-    if (isTargetStackable) { // 装飾モードチェックは不要（通常のカード移動のみここに来る）
+    if (isTargetStackable) {
         sourceSlot.removeChild(draggedItem);
         targetSlot.insertBefore(draggedItem, targetSlot.firstChild);
         
@@ -940,6 +868,11 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
         sourceSlot.removeChild(draggedItem);
         targetSlot.appendChild(draggedItem);
         
+        // プレイマット用画像の場合はタイムスタンプを付与
+        if (targetBaseZoneId === 'extra-image-zone') {
+            draggedItem.dataset.timestamp = Date.now();
+        }
+        
         if (isRecording && typeof recordAction === 'function') {
             recordAction({
                 type: 'move',
@@ -961,23 +894,23 @@ function handleCardDrop(draggedItem, targetSlot, idPrefix) {
         const baseId = getBaseId(zoneId);
 
         if(zoneId.endsWith('-back-slots')) arrangeSlots(zoneId);
-        // 装飾ゾーン（アイコン含む）の場合の更新は不要（通常カード移動なので）
-        // ただし、バックヤードのカウント更新が必要
         const realBaseId = baseId.replace('-back-slots', '');
         if (['deck', 'grave', 'exclude', 'side-deck'].includes(realBaseId)) {
              syncMainZoneImage(realBaseId, getPrefixFromZoneId(zoneId));
         }
         
-        // バンク（c-free-space）に移動した場合は所有権を消す
         if (baseId === 'c-free-space') {
             const thumb = slot.querySelector('.thumbnail');
             if(thumb) delete thumb.dataset.ownerPrefix;
         }
     });
 
-    // ★修正: マナゾーンへの移動で、かつ移動元がマナゾーンでない場合のみタップイン
     if (targetBaseZoneId.startsWith('mana') && !sourceBaseZoneId.startsWith('mana')) {
         tryAutoManaTapIn(targetSlot, idPrefix, targetZoneId);
+    }
+
+    if (typeof window.updatePlaymatState === 'function') {
+        window.updatePlaymatState();
     }
 }
 
@@ -1071,7 +1004,6 @@ function moveCardToMultiZone(thumbnailElement, targetBaseZoneId) {
 
     const idPrefix = thumbnailElement.dataset.ownerPrefix || '';
 
-    // バンクへの移動か判定
     const isCNavi = (targetBaseZoneId === 'c-free-space' || targetBaseZoneId === 'c-free-space-slots');
     const isTargetHand = (targetBaseZoneId === 'hand');
     
@@ -1103,7 +1035,6 @@ function moveCardToMultiZone(thumbnailElement, targetBaseZoneId) {
     sourceSlot.removeChild(thumbnailElement);
     emptySlot.appendChild(thumbnailElement);
     
-    // 回転状態のリセットを明示的に行う
     const img = thumbnailElement.querySelector('.card-image');
     if (img) {
         img.dataset.rotation = 0;
@@ -1111,7 +1042,6 @@ function moveCardToMultiZone(thumbnailElement, targetBaseZoneId) {
     }
     emptySlot.classList.remove('rotated-90');
     
-    // バンクへ移動した場合は所有権を消す
     if (isCNavi) {
         delete thumbnailElement.dataset.ownerPrefix;
     }
@@ -1139,7 +1069,6 @@ function moveCardToMultiZone(thumbnailElement, targetBaseZoneId) {
     resetSlotToDefault(sourceSlot);
     updateSlotStackState(sourceSlot);
 
-    // 移動元のカウント更新（バックヤードからの移動であれば）
     const realSourceBaseId = sourceParentBaseId.replace('-back-slots', '');
     if (['deck', 'grave', 'exclude', 'side-deck'].includes(realSourceBaseId)) {
          syncMainZoneImage(realSourceBaseId, getPrefixFromZoneId(sourceParentZoneId));
@@ -1148,5 +1077,9 @@ function moveCardToMultiZone(thumbnailElement, targetBaseZoneId) {
     arrangeSlots(destinationMultiZoneId);
     if (!isTargetHand && !isCNavi) {
         syncMainZoneImage(targetBaseZoneId, idPrefix);
+    }
+
+    if (typeof window.updatePlaymatState === 'function') {
+        window.updatePlaymatState();
     }
 }
