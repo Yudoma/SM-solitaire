@@ -1,0 +1,477 @@
+/* style-themes.css */
+/* カラーテーマ・スキン設定 (Sadist, Magickers, Striker, Simple, Masochist) */
+
+/* ==========================================================================
+   1. Sadist Mode (Pink/Magenta Theme)
+   ========================================================================== */
+.player-wrapper.player-sadist-mode, .opponent-wrapper.opponent-sadist-mode {
+    background-color: transparent; 
+    color: #333; 
+    border-radius: 5px; 
+    box-sizing: border-box;
+}
+.player-wrapper.player-sadist-mode .game-board, .opponent-wrapper.opponent-sadist-mode .game-board {
+    background-color: #FFF0F5; border-color: #C71585; box-shadow: 0 4px 10px rgba(199, 21, 133, 0.4);
+}
+.player-wrapper.player-sadist-mode .zone, .opponent-wrapper.opponent-sadist-mode .zone {
+    background-color: #FFECF5; border-color: #FF69B4;
+}
+.player-wrapper.player-sadist-mode .card-slot, .opponent-wrapper.opponent-sadist-mode .card-slot {
+    background-color: #FFF5FA; border: 1px dashed #FF69B4; box-shadow: 0 0 0 1px #C71585 inset;
+}
+.player-wrapper.player-sadist-mode .card-slot[data-has-card="false"], .opponent-wrapper.opponent-sadist-mode .card-slot[data-has-card="false"] {
+    background-color: #FFD9EC; 
+}
+.player-wrapper.player-sadist-mode .zone-header, .opponent-wrapper.opponent-sadist-mode .zone-header {
+    background-color: #FFB6C1; color: #8B008B;
+}
+.player-wrapper.player-sadist-mode .hand-controls-frame, .opponent-wrapper.opponent-sadist-mode .hand-controls-frame {
+    background-color: #FFF0F5; border-color: #FF69B4;
+}
+.player-wrapper.player-sadist-mode .hand-zone-slots, .opponent-wrapper.opponent-sadist-mode .hand-zone-slots {
+    background-color: #C71585; border-color: #8B008B;
+}
+.player-wrapper.player-sadist-mode .area-label, .opponent-wrapper.opponent-sadist-mode .area-label {
+    color: #C71585; text-shadow: 1px 1px 2px #FFB6C1;
+}
+.player-sadist-mode .extra-area-wrapper, .opponent-sadist-mode .extra-area-wrapper {
+    background-color: rgba(255, 240, 245, 0.85); border-color: #FF69B4;
+}
+.player-sadist-mode .extra-header-input, .opponent-sadist-mode .extra-header-input {
+    background-color: rgba(255, 182, 193, 0.9); color: #8B008B; border-color: #C71585;
+}
+.player-sadist-mode .extra-text, .opponent-sadist-mode .extra-text {
+    background-color: transparent; border-color: rgba(255, 105, 180, 0.5); color: #333;
+}
+.player-sadist-mode .extra-text::placeholder, .opponent-sadist-mode .extra-text::placeholder {
+    color: rgba(255, 105, 180, 0.7);
+}
+.player-sadist-mode .draw-btn, .opponent-sadist-mode .draw-btn {
+    background-color: #ffcc00; color: #333; box-shadow: 0 3px #997a00;
+}
+.player-sadist-mode .draw-btn:hover, .opponent-sadist-mode .draw-btn:hover {
+    background-color: #ffdb4d;
+}
+.player-sadist-mode .draw-btn:active, .opponent-sadist-mode .draw-btn:active {
+    box-shadow: 0 0 #997a00;
+}
+.player-sadist-mode .simple-counter-buttons button, .opponent-sadist-mode .simple-counter-buttons button,
+.player-sadist-mode .counter-btn, .opponent-sadist-mode .counter-btn {
+    background-color: #f0f0f0; color: #333; box-shadow: 0 2px #b0b0b0; border-color: #ccc;
+}
+.player-sadist-mode .simple-counter-buttons button:hover, .opponent-sadist-mode .simple-counter-buttons button:hover {
+    background-color: #d0d0d0;
+}
+.player-sadist-mode .counter-btn:active, .opponent-sadist-mode .counter-btn:active {
+    box-shadow: 0 0 #b0b0b0; 
+}
+
+/* ==========================================================================
+   2. Magickers Mode (Purple/Violet Theme)
+   ========================================================================== */
+.player-wrapper.player-magickers-mode, .opponent-wrapper.opponent-magickers-mode {
+    background-color: transparent; color: #e0aaff; border-radius: 5px; box-sizing: border-box;
+}
+.player-wrapper.player-magickers-mode .game-board, .opponent-wrapper.opponent-magickers-mode .game-board {
+    background-color: #240046; border-color: #7b2cbf; box-shadow: 0 4px 15px rgba(123, 44, 191, 0.4);
+}
+.player-wrapper.player-magickers-mode .zone, .opponent-wrapper.opponent-magickers-mode .zone {
+    background-color: #3c096c; border-color: #9d4edd;
+}
+.player-wrapper.player-magickers-mode .card-slot, .opponent-wrapper.opponent-magickers-mode .card-slot {
+    background-color: #5a189a; border: 1px dashed #c77dff; box-shadow: 0 0 0 1px #9d4edd inset;
+}
+.player-wrapper.player-magickers-mode .card-slot[data-has-card="false"], .opponent-wrapper.opponent-magickers-mode .card-slot[data-has-card="false"] {
+    background-color: #2d00f7; 
+}
+.player-wrapper.player-magickers-mode .zone-header, .opponent-wrapper.opponent-magickers-mode .zone-header {
+    background-color: #7b2cbf; color: #e0aaff;
+}
+.player-wrapper.player-magickers-mode .hand-controls-frame, .opponent-wrapper.opponent-magickers-mode .hand-controls-frame {
+    background-color: #240046; border-color: #7b2cbf;
+}
+.player-wrapper.player-magickers-mode .hand-zone-slots, .opponent-wrapper.opponent-magickers-mode .hand-zone-slots {
+    background-color: #10002b; border-color: #5a189a;
+}
+.player-wrapper.player-magickers-mode .area-label, .opponent-wrapper.opponent-magickers-mode .area-label {
+    color: #c77dff; text-shadow: 1px 1px 2px #7b2cbf;
+}
+.player-magickers-mode .extra-area-wrapper, .opponent-magickers-mode .extra-area-wrapper {
+    background-color: rgba(36, 0, 70, 0.85); border-color: #7b2cbf;
+}
+.player-magickers-mode .extra-header-input, .opponent-magickers-mode .extra-header-input {
+    background-color: rgba(60, 9, 108, 0.9); color: #e0aaff; border-color: #9d4edd;
+}
+.player-magickers-mode .extra-text, .opponent-magickers-mode .extra-text {
+    background-color: transparent; border-color: rgba(157, 78, 221, 0.5); color: #e0aaff;
+}
+.player-magickers-mode .extra-text::placeholder, .opponent-magickers-mode .extra-text::placeholder {
+    color: rgba(157, 78, 221, 0.7);
+}
+.player-wrapper.player-magickers-mode .draw-btn, .player-wrapper.player-magickers-mode .counter-btn,
+.opponent-wrapper.opponent-magickers-mode .draw-btn, .opponent-wrapper.opponent-magickers-mode .counter-btn {
+    background-color: #9d4edd; color: #fff; box-shadow: 0 2px #5a189a;
+}
+.player-wrapper.player-magickers-mode .draw-btn:hover, .player-wrapper.player-magickers-mode .counter-btn:hover { background-color: #c77dff; }
+.player-wrapper.player-magickers-mode .draw-btn:active, .player-wrapper.player-magickers-mode .counter-btn:active { box-shadow: 0 0 #5a189a; }
+
+/* ==========================================================================
+   3. Striker Mode (Red/Dark Red Theme)
+   ========================================================================== */
+.player-wrapper.player-striker-mode, .opponent-wrapper.opponent-striker-mode {
+    background-color: transparent; color: #ffcccc; border-radius: 5px; box-sizing: border-box;
+}
+.player-wrapper.player-striker-mode .game-board, .opponent-wrapper.opponent-striker-mode .game-board {
+    background-color: #2b0505; border-color: #8b0000; box-shadow: 0 4px 15px rgba(139, 0, 0, 0.4);
+}
+.player-wrapper.player-striker-mode .zone, .opponent-wrapper.opponent-striker-mode .zone {
+    background-color: #4a0a0a; border-color: #b22222;
+}
+.player-wrapper.player-striker-mode .card-slot, .opponent-wrapper.opponent-striker-mode .card-slot {
+    background-color: #5c1010; border: 1px dashed #cd5c5c; box-shadow: 0 0 0 1px #8b0000 inset;
+}
+.player-wrapper.player-striker-mode .card-slot[data-has-card="false"], .opponent-wrapper.opponent-striker-mode .card-slot[data-has-card="false"] {
+    background-color: #3a0505; 
+}
+.player-wrapper.player-striker-mode .zone-header, .opponent-wrapper.opponent-striker-mode .zone-header {
+    background-color: #8b0000; color: #ffb6c1;
+}
+.player-wrapper.player-striker-mode .hand-controls-frame, .opponent-wrapper.opponent-striker-mode .hand-controls-frame {
+    background-color: #2b0505; border-color: #8b0000;
+}
+.player-wrapper.player-striker-mode .hand-zone-slots, .opponent-wrapper.opponent-striker-mode .hand-zone-slots {
+    background-color: #1a0303; border-color: #a52a2a;
+}
+.player-wrapper.player-striker-mode .area-label, .opponent-wrapper.opponent-striker-mode .area-label {
+    color: #cd5c5c; text-shadow: 1px 1px 2px #800000;
+}
+.player-striker-mode .extra-area-wrapper, .opponent-striker-mode .extra-area-wrapper {
+    background-color: rgba(43, 5, 5, 0.85); border-color: #8b0000;
+}
+.player-striker-mode .extra-header-input, .opponent-striker-mode .extra-header-input {
+    background-color: rgba(74, 10, 10, 0.9); color: #ffcccc; border-color: #cd5c5c;
+}
+.player-striker-mode .extra-text, .opponent-striker-mode .extra-text {
+    background-color: transparent; border-color: rgba(205, 92, 92, 0.5); color: #ffcccc;
+}
+.player-striker-mode .extra-text::placeholder, .opponent-striker-mode .extra-text::placeholder {
+    color: rgba(205, 92, 92, 0.7);
+}
+.player-wrapper.player-striker-mode .draw-btn, .player-wrapper.player-striker-mode .counter-btn,
+.opponent-wrapper.opponent-striker-mode .draw-btn, .opponent-wrapper.opponent-striker-mode .counter-btn {
+    background-color: #cd5c5c; color: #fff; box-shadow: 0 2px #8b0000;
+}
+.player-wrapper.player-striker-mode .draw-btn:hover, .player-wrapper.player-striker-mode .counter-btn:hover { background-color: #f08080; }
+.player-wrapper.player-striker-mode .draw-btn:active, .player-wrapper.player-striker-mode .counter-btn:active { box-shadow: 0 0 #8b0000; }
+
+/* ==========================================================================
+   4. Simple Mode (White/Black Theme)
+   ========================================================================== */
+.player-wrapper.player-simple-mode, .opponent-wrapper.opponent-simple-mode {
+    background-color: transparent; color: #000; border-radius: 5px; box-sizing: border-box;
+}
+.player-wrapper.player-simple-mode .game-board, .opponent-wrapper.opponent-simple-mode .game-board {
+    background-color: #ffffff; border-color: #000000; box-shadow: none; border-width: 2px;
+}
+.player-wrapper.player-simple-mode .zone, .opponent-wrapper.opponent-simple-mode .zone {
+    background-color: #f5f5f5; border-color: #333;
+}
+.player-wrapper.player-simple-mode .card-slot, .opponent-wrapper.opponent-simple-mode .card-slot {
+    background-color: #ffffff; border: 1px solid #666; box-shadow: none;
+}
+.player-wrapper.player-simple-mode .card-slot[data-has-card="false"], .opponent-wrapper.opponent-simple-mode .card-slot[data-has-card="false"] {
+    background-color: #eeeeee; 
+}
+.player-wrapper.player-simple-mode .zone-header, .opponent-wrapper.opponent-simple-mode .zone-header {
+    background-color: #333; color: #fff; border-radius: 0;
+}
+.player-wrapper.player-simple-mode .hand-controls-frame, .opponent-wrapper.opponent-simple-mode .hand-controls-frame {
+    background-color: #ffffff; border-color: #000000;
+}
+.player-wrapper.player-simple-mode .hand-zone-slots, .opponent-wrapper.opponent-simple-mode .hand-zone-slots {
+    background-color: #f0f0f0; border-color: #333;
+}
+.player-wrapper.player-simple-mode .area-label, .opponent-wrapper.opponent-simple-mode .area-label {
+    color: #000; text-shadow: none;
+}
+.player-simple-mode .extra-area-wrapper, .opponent-simple-mode .extra-area-wrapper {
+    background-color: rgba(255, 255, 255, 0.9); border-color: #000;
+}
+.player-simple-mode .extra-header-input, .opponent-simple-mode .extra-header-input {
+    background-color: #f0f0f0; color: #000; border-color: #ccc;
+}
+.player-simple-mode .extra-text, .opponent-simple-mode .extra-text {
+    background-color: transparent; border-color: rgba(102, 102, 102, 0.5); color: #000;
+}
+.player-simple-mode .extra-text::placeholder, .opponent-simple-mode .extra-text::placeholder {
+    color: #999;
+}
+.player-wrapper.player-simple-mode .draw-btn, .player-wrapper.player-simple-mode .counter-btn,
+.opponent-wrapper.opponent-simple-mode .draw-btn, .opponent-wrapper.opponent-simple-mode .counter-btn {
+    background-color: #eee; color: #000; box-shadow: 0 1px #ccc; border: 1px solid #999;
+}
+.player-wrapper.player-simple-mode .draw-btn:hover, .player-wrapper.player-simple-mode .counter-btn:hover { background-color: #ddd; }
+.player-wrapper.player-simple-mode .draw-btn:active, .player-wrapper.player-simple-mode .counter-btn:active { box-shadow: none; transform: translateY(1px); }
+
+/* ==========================================================================
+   5. Masochist Mode (Blue Theme)
+   ========================================================================== */
+.player-wrapper.player-masochist-mode, .opponent-wrapper.opponent-masochist-mode {
+    background-color: transparent; 
+    color: #333; 
+    border-radius: 5px; 
+    box-sizing: border-box;
+}
+.player-wrapper.player-masochist-mode .game-board, .opponent-wrapper.opponent-masochist-mode .game-board {
+    background-color: #F0F8FF; border-color: #4169E1; box-shadow: 0 4px 10px rgba(65, 105, 225, 0.4);
+}
+.player-wrapper.player-masochist-mode .zone, .opponent-wrapper.opponent-masochist-mode .zone {
+    background-color: #E6F2FF; border-color: #1E90FF;
+}
+.player-wrapper.player-masochist-mode .card-slot, .opponent-wrapper.opponent-masochist-mode .card-slot {
+    background-color: #F5FAFF; border: 1px dashed #1E90FF; box-shadow: 0 0 0 1px #4169E1 inset;
+}
+.player-wrapper.player-masochist-mode .card-slot[data-has-card="false"], .opponent-wrapper.opponent-masochist-mode .card-slot[data-has-card="false"] {
+    background-color: #D6EAFE; 
+}
+.player-wrapper.player-masochist-mode .zone-header, .opponent-wrapper.opponent-masochist-mode .zone-header {
+    background-color: #87CEFA; color: #00008B;
+}
+.player-wrapper.player-masochist-mode .hand-controls-frame, .opponent-wrapper.opponent-masochist-mode .hand-controls-frame {
+    background-color: #F0F8FF; border-color: #1E90FF;
+}
+.player-wrapper.player-masochist-mode .hand-zone-slots, .opponent-wrapper.opponent-masochist-mode .hand-zone-slots {
+    background-color: #4169E1; border-color: #00008B;
+}
+.player-wrapper.player-masochist-mode .area-label, .opponent-wrapper.opponent-masochist-mode .area-label {
+    color: #00008B; text-shadow: 1px 1px 2px #B0C4DE;
+}
+.player-masochist-mode .extra-area-wrapper, .opponent-masochist-mode .extra-area-wrapper {
+    background-color: rgba(240, 248, 255, 0.85); border-color: #1E90FF;
+}
+.player-masochist-mode .extra-header-input, .opponent-masochist-mode .extra-header-input {
+    background-color: rgba(176, 196, 222, 0.9); color: #00008B; border-color: #4169E1;
+}
+.player-masochist-mode .extra-text, .opponent-masochist-mode .extra-text {
+    background-color: transparent; border-color: rgba(30, 144, 255, 0.5); color: #00008B;
+}
+.player-masochist-mode .extra-text::placeholder, .opponent-masochist-mode .extra-text::placeholder {
+    color: rgba(30, 144, 255, 0.7);
+}
+.player-masochist-mode .draw-btn, .opponent-masochist-mode .draw-btn {
+    background-color: #007bff; color: white; box-shadow: 0 3px #0056b3;
+}
+.player-masochist-mode .draw-btn:hover, .opponent-masochist-mode .draw-btn:hover {
+    background-color: #0094ff;
+}
+.player-masochist-mode .draw-btn:active, .opponent-masochist-mode .draw-btn:active {
+    box-shadow: 0 0 #0056b3;
+}
+.player-masochist-mode .simple-counter-buttons button, .opponent-masochist-mode .simple-counter-buttons button,
+.player-masochist-mode .counter-btn, .opponent-masochist-mode .counter-btn {
+    background-color: #f0f0f0; color: #333; box-shadow: 0 2px #b0b0b0; border-color: #ccc;
+}
+.player-masochist-mode .simple-counter-buttons button:hover, .opponent-masochist-mode .simple-counter-buttons button:hover {
+    background-color: #d0d0d0;
+}
+.player-masochist-mode .counter-btn:active, .opponent-masochist-mode .counter-btn:active {
+    box-shadow: 0 0 #b0b0b0; 
+}
+
+/* ==========================================================================
+   6. UI Components Theme (Counter Wrapper)
+   ========================================================================== */
+
+/* Sadist UI */
+.counter-wrapper.sadist-ui-active .area-label { color: #C71585; text-shadow: 1px 1px 2px #FFB6C1; }
+.counter-wrapper.sadist-ui-active .hand-counter-group { background-color: #FFF0F5; border-color: #FF69B4; }
+.counter-wrapper.sadist-ui-active .player-icon-slot { background-color: #FFF0F5; border-color: #C71585; }
+.counter-wrapper.sadist-ui-active .player-name-input { color: #C71585; background-color: #FFF5FA; border-color: #FFB6C1; }
+.counter-wrapper.sadist-ui-active .simple-counter-buttons input[type="number"],
+.counter-wrapper.sadist-ui-active .lp-counter-input, 
+.counter-wrapper.sadist-ui-active .mana-counter-input, 
+.counter-wrapper.sadist-ui-active .hyphen-counter-input { 
+    color: #C71585; background-color: #FFF5FA; border-color: #FFB6C1; 
+}
+
+/* Masochist UI (Blue) */
+.counter-wrapper.masochist-ui-active .area-label { color: #00008B; text-shadow: 1px 1px 2px #B0C4DE; }
+.counter-wrapper.masochist-ui-active .hand-counter-group { background-color: #F0F8FF; border-color: #4169E1; }
+.counter-wrapper.masochist-ui-active .player-icon-slot { background-color: #F0F8FF; border-color: #00008B; }
+.counter-wrapper.masochist-ui-active .player-name-input { color: #00008B; background-color: #F0F8FF; border-color: #B0C4DE; }
+.counter-wrapper.masochist-ui-active .simple-counter-buttons input[type="number"],
+.counter-wrapper.masochist-ui-active .lp-counter-input, 
+.counter-wrapper.masochist-ui-active .mana-counter-input, 
+.counter-wrapper.masochist-ui-active .hyphen-counter-input { 
+    color: #00008B; background-color: #F0F8FF; border-color: #B0C4DE; 
+}
+
+/* Magickers UI */
+.counter-wrapper.magickers-ui-active .area-label { color: #c77dff; text-shadow: 1px 1px 2px #7b2cbf; }
+.counter-wrapper.magickers-ui-active .hand-counter-group { background-color: #240046; border-color: #7b2cbf; }
+.counter-wrapper.magickers-ui-active .player-icon-slot { background-color: #3c096c; border-color: #9d4edd; }
+.counter-wrapper.magickers-ui-active .player-name-input { color: #e0aaff; background-color: #240046; border-color: #9d4edd; }
+.counter-wrapper.magickers-ui-active .simple-counter-buttons input[type="number"],
+.counter-wrapper.magickers-ui-active .lp-counter-input, 
+.counter-wrapper.magickers-ui-active .mana-counter-input, 
+.counter-wrapper.magickers-ui-active .hyphen-counter-input { 
+    color: #e0aaff; background-color: #240046; border-color: #9d4edd; 
+}
+
+/* Striker UI */
+.counter-wrapper.striker-ui-active .area-label { color: #cd5c5c; text-shadow: 1px 1px 2px #800000; }
+.counter-wrapper.striker-ui-active .hand-counter-group { background-color: #2b0505; border-color: #8b0000; }
+.counter-wrapper.striker-ui-active .player-icon-slot { background-color: #4a0a0a; border-color: #b22222; }
+.counter-wrapper.striker-ui-active .player-name-input { color: #ffcccc; background-color: #2b0505; border-color: #8b0000; }
+.counter-wrapper.striker-ui-active .simple-counter-buttons input[type="number"],
+.counter-wrapper.striker-ui-active .lp-counter-input, 
+.counter-wrapper.striker-ui-active .mana-counter-input, 
+.counter-wrapper.striker-ui-active .hyphen-counter-input { 
+    color: #ffcccc; background-color: #2b0505; border-color: #8b0000; 
+}
+
+/* Simple UI */
+.counter-wrapper.simple-ui-active .area-label { color: #000; text-shadow: none; }
+.counter-wrapper.simple-ui-active .hand-counter-group { background-color: #fff; border-color: #000; }
+.counter-wrapper.simple-ui-active .player-icon-slot { background-color: #fff; border-color: #000; }
+.counter-wrapper.simple-ui-active .player-name-input { color: #000; background-color: #fff; border-color: #ccc; font-family: sans-serif; }
+.counter-wrapper.simple-ui-active .simple-counter-buttons input[type="number"],
+.counter-wrapper.simple-ui-active .lp-counter-input, 
+.counter-wrapper.simple-ui-active .mana-counter-input, 
+.counter-wrapper.simple-ui-active .hyphen-counter-input { 
+    color: #000; background-color: #fff; border-color: #ccc; 
+}
+
+/* ==========================================================================
+   7. Side Drawer Overrides (Player/Opponent Drawers Only)
+   ========================================================================== */
+
+/* SM Mode - Side Drawers (Shared Sadist Style) */
+body.player-sadist-active #player-drawer, body.opponent-sadist-active #opponent-drawer { background-color: #FFF0F5; border-color: #C71585; color: #333; }
+body.player-sadist-active #player-drawer-toggle, body.opponent-sadist-active #opponent-drawer-toggle { background-color: #ffcc00; color: #333; box-shadow: 0 2px #997a00; }
+body.player-sadist-active #player-drawer .drawer-tabs, body.opponent-sadist-active #opponent-drawer .drawer-tabs { background-color: #FFECF5; border-bottom-color: #FF69B4; }
+body.player-sadist-active #player-drawer .drawer-tab-btn, body.opponent-sadist-active #opponent-drawer .drawer-tab-btn { color: #C71585; border-right-color: #FFB6C1; }
+body.player-sadist-active #player-drawer .drawer-tab-btn.active, body.opponent-sadist-active #opponent-drawer .drawer-tab-btn.active { background-color: #FF69B4; color: #FFF0F5; }
+body.player-sadist-active #player-drawer .drawer-panel .deck-back-slot-container,
+body.player-sadist-active #player-drawer .drawer-free-space .free-space-slot-container,
+body.player-sadist-active #player-drawer .drawer-token-space .token-slot-container,
+body.opponent-sadist-active #opponent-drawer .drawer-panel .deck-back-slot-container,
+body.opponent-sadist-active #opponent-drawer .drawer-free-space .free-space-slot-container,
+body.opponent-sadist-active #opponent-drawer .drawer-token-space .token-slot-container {
+    background-color: #FFF5FA; border-color: #FFB6C1;
+}
+body.player-sadist-active #player-drawer .sidebar-button-container .draw-btn,
+body.opponent-sadist-active #opponent-drawer .sidebar-button-container .draw-btn {
+    background-color: #ffcc00; color: #333; box-shadow: 0 2px #997a00;
+}
+body.player-sadist-active #player-drawer .sidebar-button-container .draw-btn:hover,
+body.opponent-sadist-active #opponent-drawer .sidebar-button-container .draw-btn:hover {
+    background-color: #ffdb4d;
+}
+body.player-sadist-active #player-drawer .sidebar-button-container .draw-btn:active,
+body.opponent-sadist-active #opponent-drawer .sidebar-button-container .draw-btn:active {
+    box-shadow: 0 0 #997a00;
+}
+
+/* Masochist Mode - Side Drawers */
+body.player-masochist-active #player-drawer, body.opponent-masochist-active #opponent-drawer { background-color: #F0F8FF; border-color: #00008B; color: #333; }
+body.player-masochist-active #player-drawer-toggle, body.opponent-masochist-active #opponent-drawer-toggle { background-color: #007bff; color: #fff; box-shadow: 0 2px #0056b3; }
+body.player-masochist-active #player-drawer .drawer-tabs, body.opponent-masochist-active #opponent-drawer .drawer-tabs { background-color: #E6F2FF; border-bottom-color: #4169E1; }
+body.player-masochist-active #player-drawer .drawer-tab-btn, body.opponent-masochist-active #opponent-drawer .drawer-tab-btn { color: #00008B; border-right-color: #87CEFA; }
+body.player-masochist-active #player-drawer .drawer-tab-btn.active, body.opponent-masochist-active #opponent-drawer .drawer-tab-btn.active { background-color: #4169E1; color: #F0F8FF; }
+body.player-masochist-active #player-drawer .drawer-panel .deck-back-slot-container,
+body.player-masochist-active #player-drawer .drawer-free-space .free-space-slot-container,
+body.player-masochist-active #player-drawer .drawer-token-space .token-slot-container,
+body.opponent-masochist-active #opponent-drawer .drawer-panel .deck-back-slot-container,
+body.opponent-masochist-active #opponent-drawer .drawer-free-space .free-space-slot-container,
+body.opponent-masochist-active #opponent-drawer .drawer-token-space .token-slot-container {
+    background-color: #F5FAFF; border-color: #87CEFA;
+}
+body.player-masochist-active #player-drawer .sidebar-button-container .draw-btn,
+body.opponent-masochist-active #opponent-drawer .sidebar-button-container .draw-btn {
+    background-color: #007bff; color: white; box-shadow: 0 2px #0056b3;
+}
+body.player-masochist-active #player-drawer .sidebar-button-container .draw-btn:hover,
+body.opponent-masochist-active #opponent-drawer .sidebar-button-container .draw-btn:hover {
+    background-color: #0094ff;
+}
+body.player-masochist-active #player-drawer .sidebar-button-container .draw-btn:active,
+body.opponent-masochist-active #opponent-drawer .sidebar-button-container .draw-btn:active {
+    box-shadow: 0 0 #0056b3;
+}
+
+/* Magickers */
+body.player-magickers-active #player-drawer, body.opponent-magickers-active #opponent-drawer { background-color: #240046; border-color: #7b2cbf; color: #e0aaff; }
+body.player-magickers-active #player-drawer-toggle, body.opponent-magickers-active #opponent-drawer-toggle { background-color: #9d4edd; color: #fff; box-shadow: 0 2px #5a189a; }
+body.player-magickers-active #player-drawer .drawer-tabs, body.opponent-magickers-active #opponent-drawer .drawer-tabs { background-color: #10002b; border-bottom-color: #5a189a; }
+body.player-magickers-active #player-drawer .drawer-tab-btn, body.opponent-magickers-active #opponent-drawer .drawer-tab-btn { color: #c77dff; border-right-color: #5a189a; }
+body.player-magickers-active #player-drawer .drawer-tab-btn.active, body.opponent-magickers-active #opponent-drawer .drawer-tab-btn.active { background-color: #7b2cbf; color: #fff; }
+body.player-magickers-active #player-drawer .drawer-panel .deck-back-slot-container,
+body.player-magickers-active #player-drawer .drawer-free-space .free-space-slot-container,
+body.player-magickers-active #player-drawer .drawer-token-space .token-slot-container,
+body.opponent-magickers-active #opponent-drawer .drawer-panel .deck-back-slot-container,
+body.opponent-magickers-active #opponent-drawer .drawer-free-space .free-space-slot-container,
+body.opponent-magickers-active #opponent-drawer .drawer-token-space .token-slot-container {
+    background-color: #3c096c; border-color: #9d4edd;
+}
+
+/* Striker */
+body.player-striker-active #player-drawer, body.opponent-striker-active #opponent-drawer { background-color: #2b0505; border-color: #8b0000; color: #ffcccc; }
+body.player-striker-active #player-drawer-toggle, body.opponent-striker-active #opponent-drawer-toggle { background-color: #b22222; color: #fff; box-shadow: 0 2px #800000; }
+body.player-striker-active #player-drawer .drawer-tabs, body.opponent-striker-active #opponent-drawer .drawer-tabs { background-color: #1a0303; border-bottom-color: #8b0000; }
+body.player-striker-active #player-drawer .drawer-tab-btn, body.opponent-striker-active #opponent-drawer .drawer-tab-btn { color: #cd5c5c; border-right-color: #8b0000; }
+body.player-striker-active #player-drawer .drawer-tab-btn.active, body.opponent-striker-active #opponent-drawer .drawer-tab-btn.active { background-color: #a52a2a; color: #fff; }
+body.player-striker-active #player-drawer .drawer-panel .deck-back-slot-container,
+body.player-striker-active #player-drawer .drawer-free-space .free-space-slot-container,
+body.player-striker-active #player-drawer .drawer-token-space .token-slot-container,
+body.opponent-striker-active #opponent-drawer .drawer-panel .deck-back-slot-container,
+body.opponent-striker-active #opponent-drawer .drawer-free-space .free-space-slot-container,
+body.opponent-striker-active #opponent-drawer .drawer-token-space .token-slot-container {
+    background-color: #4a0a0a; border-color: #cd5c5c;
+}
+
+/* Simple */
+body.player-simple-active #player-drawer, body.opponent-simple-active #opponent-drawer { background-color: #fff; border-color: #000; color: #000; }
+body.player-simple-active #player-drawer-toggle, body.opponent-simple-active #opponent-drawer-toggle { background-color: #eee; color: #000; box-shadow: 0 2px #ccc; }
+body.player-simple-active #player-drawer .drawer-tabs, body.opponent-simple-active #opponent-drawer .drawer-tabs { background-color: #f0f0f0; border-bottom-color: #000; }
+body.player-simple-active #player-drawer .drawer-tab-btn, body.opponent-simple-active #opponent-drawer .drawer-tab-btn { color: #333; border-right-color: #ccc; }
+body.player-simple-active #player-drawer .drawer-tab-btn.active, body.opponent-simple-active #opponent-drawer .drawer-tab-btn.active { background-color: #333; color: #fff; }
+body.player-simple-active #player-drawer .drawer-panel .deck-back-slot-container,
+body.player-simple-active #player-drawer .drawer-free-space .free-space-slot-container,
+body.player-simple-active #player-drawer .drawer-token-space .token-slot-container,
+body.opponent-simple-active #opponent-drawer .drawer-panel .deck-back-slot-container,
+body.opponent-simple-active #opponent-drawer .drawer-free-space .free-space-slot-container,
+body.opponent-simple-active #opponent-drawer .drawer-token-space .token-slot-container {
+    background-color: #fff; border-color: #000;
+}
+
+/* Button Colors per Theme */
+.draw-btn[data-mode="sadist"] {
+    background-color: #cc0000; box-shadow: 0 3px #800000; color: white;
+}
+.draw-btn[data-mode="sadist"]:hover { background-color: #e60000; }
+.draw-btn[data-mode="sadist"]:active { box-shadow: 0 0 #800000; }
+
+.draw-btn[data-mode="masochist"] {
+    background-color: #007bff; box-shadow: 0 3px #0056b3; color: white;
+}
+.draw-btn[data-mode="masochist"]:hover { background-color: #0094ff; }
+.draw-btn[data-mode="masochist"]:active { box-shadow: 0 0 #0056b3; }
+
+.draw-btn[data-mode="magickers"] {
+    background-color: #8a2be2; box-shadow: 0 3px #4b0082; color: white;
+}
+.draw-btn[data-mode="magickers"]:hover { background-color: #9932cc; }
+.draw-btn[data-mode="magickers"]:active { box-shadow: 0 0 #4b0082; }
+
+.draw-btn[data-mode="striker"] {
+    background-color: #b22222; box-shadow: 0 3px #800000; color: white;
+}
+.draw-btn[data-mode="striker"]:hover { background-color: #dc143c; }
+.draw-btn[data-mode="striker"]:active { box-shadow: 0 0 #800000; }
+
+.draw-btn[data-mode="simple"] {
+    background-color: #333; box-shadow: 0 3px #000; color: white;
+}
+.draw-btn[data-mode="simple"]:hover { background-color: #555; }
+.draw-btn[data-mode="simple"]:active { box-shadow: 0 0 #000; }

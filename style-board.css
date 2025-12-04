@@ -1,0 +1,760 @@
+/* style-board.css */
+/* 盤面・ゾーン・カードスロット・サムネイルのスタイル */
+
+/* --- Game Board Layout --- */
+.game-board {
+    width: 100%; 
+    border: 4px solid #555;
+    box-shadow: 0 4px 15px rgba(100, 100, 100, 0.2);
+    background-color: #333;
+    display: grid;
+    grid-template-columns: 0.5fr 2.0fr 3fr 2.0fr 0.5fr;  
+    grid-template-rows: minmax(140px, 1fr) minmax(140px, 1fr); 
+    grid-template-areas:
+        "grave special1 battle special2 exclude" 
+        "mana-left mana-left spell mana-right mana-right"; 
+    gap: 0px;
+    padding: 0px; 
+    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    flex-shrink: 0; 
+    max-width: 100%;
+}
+
+/* --- Zones Common --- */
+.zone {
+    border: 2px solid #555; 
+    background-color: #444; 
+    display: flex;
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 0px; 
+    box-sizing: border-box;
+    overflow: visible;  
+    position: relative;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.zone-header {
+    font-size: 1.2em;  
+    font-weight: bold;
+    z-index: 12; 
+    text-decoration: none; 
+    transition: color 0.2s, text-decoration 0.2s, background-color 0.3s; 
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    opacity: 0.6;  
+    pointer-events: none; 
+    white-space: nowrap; 
+    background-color: rgba(0, 0, 0, 0.5); 
+    padding: 5px 10px; 
+    border-radius: 5px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+body.nav-hidden .zone-header {
+    display: none;
+}
+
+/* --- Opponent Text Flip Logic --- */
+.opponent-text-flip {
+    transform: scaleY(-1) translateZ(0); 
+    z-index: 20; 
+}
+
+body.board-flipped .opponent-text-flip {
+    transform: scaleY(1);
+}
+
+body.board-flipped .player-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(-1);
+}
+
+.opponent-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(-1) translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+body.board-flipped .opponent-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(1) translateZ(0);
+    z-index: 20;
+    backface-visibility: hidden;
+}
+
+/* --- Slot Container --- */
+.slot-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;  
+    align-content: center;  
+    gap: 3px; 
+    width: 100%;
+    overflow: visible;  
+    padding: 1px; 
+}
+
+/* --- Card Slot & Thumbnail --- */
+.card-slot {
+    background-color: #555; 
+    border: 1px dashed #888; 
+    box-shadow: 0 0 0 1px #777 inset; 
+    border-radius: 3px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: visible;  
+    position: relative; 
+    width: var(--card-width);
+    height: var(--card-height);
+    transition: width 0.3s ease-in-out, height 0.3s ease-in-out, background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.card-slot.rotated-90 {
+    width: var(--card-height);
+    height: var(--card-width);
+}
+
+.card-slot[data-has-card="false"] {
+    background-color: #444; 
+}
+.card-slot:has(.thumbnail) {
+    background-color: transparent;
+    border: 1px dashed transparent;
+    box-shadow: none;
+}
+
+.thumbnail {
+    width: 100%;
+    height: 100%;
+    overflow: visible;  
+    border: none;
+    cursor: grab;
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: opacity 0.1s;
+    z-index: 5;
+}
+
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; 
+    pointer-events: none;
+    transition: transform 0.3s ease-in-out;
+    transform-origin: center;
+}
+
+.card-slot img.zone-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    display: none; 
+    pointer-events: none;
+}
+
+/* --- Drag & Drop Highlights --- */
+.drag-over {
+    background-color: #666;
+}
+
+.card-slot.drag-over {
+    background-color: #777;
+    border: 2px solid #aaa;
+    transform: scale(1.02);
+    transition: transform 0.1s;
+}
+
+/* --- Specific Zone Layouts --- */
+.special-zone-1 { grid-area: special1; }
+.spell-zone { grid-area: spell; }
+.battle-zone { grid-area: battle; }
+.special-zone-2 { grid-area: special2; }
+.exclude-zone { grid-area: exclude; }
+
+.mana-zone#mana-left,
+.mana-zone#opponent-mana-left { grid-area: mana-left; }
+
+.mana-zone#mana-right,
+.opponent-wrapper #opponent-mana-right { grid-area: mana-right; }
+
+.grave-zone {
+    grid-area: grave; 
+    flex-grow: 1; 
+    width: 100%;
+}
+
+.special-zone-1 .slot-container,
+.special-zone-2 .slot-container {
+    flex-direction: row; 
+    justify-content: center; 
+    align-items: center; 
+    flex-wrap: nowrap; 
+    gap: 3px; 
+}
+
+.battle-zone .slot-container,
+.spell-zone .slot-container {
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+}
+
+.mana-zone .slot-container {
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    flex-direction: row; 
+    flex-wrap: nowrap; 
+    padding: 1px;
+    gap: 3px;
+    height: 100%;
+    width: 100%;
+    overflow: visible;  
+}
+
+.grave-zone .card-slot,
+.exclude-zone .card-slot {
+    width: var(--card-width); 
+    height: var(--card-height);
+}
+.grave-zone .slot-container,
+.exclude-zone .slot-container {
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-content: center;
+}
+
+.deck-zone .card-slot {
+    width: 75.6px;
+    height: 134.676px;
+}
+.deck-zone .slot-container {
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-content: center;
+    height: 100%;
+}
+
+/* --- Hand Area Structures --- */
+.hand-controls-top-wrapper {
+    display: flex;
+    flex-direction: row; 
+    justify-content: flex-start; 
+    align-items: stretch;
+    gap: 1px;
+    width: 100%; 
+    height: 100%;
+    min-height: 0;
+}
+
+.hand-controls-frame {
+    border: 1px solid #555;
+    background-color: #333;
+    padding: 2px;
+    border-radius: 5px;
+    display: flex;
+    flex-grow: 0; 
+    flex-shrink: 1;
+    align-items: flex-start; 
+    height: 100%;
+    gap: 2px;
+    padding-top: 1px; 
+    transition: background-color 0.3s, border-color 0.3s;
+    min-height: 0;
+}
+
+.hand-controls-top-wrapper > .deck-zone {
+    flex-shrink: 0; 
+    flex-grow: 0;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 67.2 / 119.712; 
+    min-width: 80px;
+    max-width: 100px;
+    padding: 1px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hand-zone-wrapper {
+    flex-grow: 1; 
+    padding: 0; 
+    position: relative; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.hand-zone-slots {
+    display: flex;
+    gap: 2px;
+    height: 100%;
+    min-height: 0;
+    border: 1px solid #555; 
+    background-color: #222; 
+    padding: 2px;
+    border-radius: 5px;
+    flex-wrap: nowrap; 
+    overflow-x: auto; 
+    overflow-y: hidden;
+    margin-top: 0; 
+    flex-grow: 1; 
+    align-items: center; 
+    justify-content: center; 
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.hand-controls-top-wrapper .card-slot,
+.hand-zone-slots .card-slot {
+    width: auto !important; 
+    height: 100% !important; 
+    max-height: var(--card-height); 
+    min-height: 40px; 
+    aspect-ratio: 67.2 / 119.712; 
+    flex-shrink: 1;
+    flex-grow: 0;
+}
+
+.opponent-wrapper .hand-zone-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(-1) translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+}
+body.board-flipped .opponent-wrapper .hand-zone-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(1) translateZ(0);
+}
+body.board-flipped .player-wrapper .hand-zone-wrapper .zone-header {
+    transform: translate(-50%, -50%) scaleY(-1);
+    z-index: 20; 
+}
+
+/* --- Extra Area (Field / Ex) --- */
+.extra-area-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 220px; 
+    min-width: 180px;
+    height: 100%;
+    background-color: rgba(51, 51, 51, 0.8);
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 2px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin-right: 1px;
+}
+
+.opponent-wrapper .extra-area-wrapper {
+    transform: scaleY(-1);
+}
+body.board-flipped .opponent-wrapper .extra-area-wrapper {
+    transform: scaleY(1);
+}
+body.board-flipped .player-wrapper .extra-area-wrapper {
+    transform: scaleY(-1);
+}
+
+.extra-grid {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+}
+
+.extra-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 50%;
+    height: 100%;
+    justify-content: space-between;
+}
+
+.extra-row {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.extra-image-zone {
+    flex-shrink: 0;
+    flex-grow: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1px;
+    box-sizing: border-box;
+    width: 140px; 
+}
+
+.extra-image-zone .card-slot {
+    width: 120px !important; 
+    height: 68px !important; 
+    border-radius: 5px;
+}
+
+/* --- Stacked Card Logic --- */
+.card-slot.stacked {
+    overflow: visible;
+}
+
+.card-slot.stacked .thumbnail {
+    transition: transform 0.2s ease-out, z-index 0s 0.2s, opacity 0.2s, box-shadow 0.2s ease-out;
+    pointer-events: auto; 
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 3px; 
+    box-sizing: border-box; 
+}
+
+.card-slot.stacked .thumbnail:last-child {
+    transform: translateY(0);
+    z-index: 10; 
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(2) {
+    transform: translateY(6%); 
+    z-index: 9;
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(3) {
+    transform: translateY(12%); 
+    z-index: 8;
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(4) {
+    transform: translateY(18%);
+    z-index: 7;
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(n+5) {
+    transform: translateY(24%);
+    z-index: 6;
+}
+
+.card-slot.stacked .thumbnail:hover {
+    z-index: 11; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    opacity: 1;
+}
+
+.card-slot.stacked .thumbnail:last-child:hover {
+    transform: translateY(0) scale(1.05);
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(2):hover {
+    transform: translateY(6%) scale(1.01); 
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(3):hover {
+    transform: translateY(12%) scale(1.01); 
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(4):hover {
+    transform: translateY(28%) scale(1.01); 
+}
+
+.card-slot.stacked .thumbnail:nth-last-child(n+5):hover {
+    transform: translateY(24%) scale(1.01); 
+}
+
+.card-slot.stacked:hover .thumbnail:not(:hover) {
+    opacity: 0.7;
+}
+
+/* --- Card Count Overlay (Deck/Grave/etc.) --- */
+.card-slot .count-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 5px 10px;
+    border-radius: 5px;
+    z-index: 10;
+    user-select: none;
+    pointer-events: none; 
+    display: none; 
+}
+
+.opponent-wrapper .count-overlay {
+    transform: translate(-50%, -50%) scaleY(-1) translateZ(0); 
+    z-index: 20; 
+}
+body.board-flipped .opponent-wrapper .count-overlay {
+    transform: translate(-50%, -50%); 
+}
+body.board-flipped .player-wrapper .count-overlay {
+    transform: translate(-50%, -50%) scaleY(-1);
+    z-index: 20;
+}
+
+/* --- Cursor & Hover Effects for Zones --- */
+.deck-zone .thumbnail,
+.grave-zone .thumbnail,
+.exclude-zone .thumbnail,
+.side-deck-zone .thumbnail {
+    cursor: pointer;
+}
+
+.player-wrapper .deck-zone .card-slot,
+.player-wrapper .side-deck-zone .card-slot,
+.player-wrapper .grave-zone .card-slot,
+.player-wrapper .exclude-zone .card-slot,
+.opponent-wrapper .deck-zone .card-slot,
+.opponent-wrapper .side-deck-zone .card-slot,
+.opponent-wrapper .grave-zone .card-slot,
+.opponent-wrapper .exclude-zone .card-slot {
+    cursor: pointer;
+    transition: background-color 0.2s;  
+}
+
+body:not(.common-decoration-mode-active) .player-wrapper .deck-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .side-deck-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .grave-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .exclude-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .mana-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .battle-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .spell-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .special-zone-1 .card-slot:hover,
+body:not(.common-decoration-mode-active) .player-wrapper .special-zone-2 .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .deck-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .side-deck-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .grave-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .exclude-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .mana-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .battle-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .spell-zone .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .special-zone-1 .card-slot:hover,
+body:not(.common-decoration-mode-active) .opponent-wrapper .special-zone-2 .card-slot:hover,
+body:not(.common-decoration-mode-active) .hand-zone-slots .card-slot:hover,
+body:not(.common-decoration-mode-active) #opponent-hand-zone .card-slot:hover {
+    background-color: #666;  
+}
+
+.player-wrapper .exclude-zone .zone-header:hover,
+.player-wrapper .grave-zone .zone-header:hover,
+.player-wrapper .side-deck-zone .zone-header:hover,
+.player-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:hover,
+.opponent-wrapper .exclude-zone .zone-header:hover,
+.opponent-wrapper .grave-zone .zone-header:hover,
+.opponent-wrapper .side-deck-zone .zone-header:hover,
+.opponent-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:hover {
+    background-color: #ffdb4d;
+}
+
+.player-wrapper .exclude-zone .zone-header:active,
+.player-wrapper .grave-zone .zone-header:active,
+.player-wrapper .side-deck-zone .zone-header:active,
+.player-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:active {
+    box-shadow: 0 0 #997a00; 
+    transform: translateY(2px); 
+}
+
+.opponent-wrapper .exclude-zone .zone-header:active,
+.opponent-wrapper .grave-zone .zone-header:active,
+.opponent-wrapper .side-deck-zone .zone-header:active,
+.opponent-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:active {
+    transform: translateY(-2px) scaleY(-1); 
+}
+
+body.board-flipped .opponent-wrapper .exclude-zone .zone-header:active,
+body.board-flipped .opponent-wrapper .grave-zone .zone-header:active,
+body.board-flipped .opponent-wrapper .side-deck-zone .zone-header:active,
+body.board-flipped .opponent-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:active {
+    box-shadow: 0 0 #997a00;
+    transform: translateY(2px); 
+}
+
+body.board-flipped .player-wrapper .exclude-zone .zone-header:active,
+body.board-flipped .player-wrapper .grave-zone .zone-header:active,
+body.board-flipped .player-wrapper .side-deck-zone .zone-header:active,
+body.board-flipped .player-wrapper .hand-controls-top-wrapper > .deck-zone .zone-header:active {
+    transform: translateY(-2px) scaleY(-1); 
+}
+
+/* --- Decoration Mode Highlights --- */
+body.common-decoration-mode-active .player-wrapper .deck-zone .card-slot,
+body.common-decoration-mode-active .player-wrapper .side-deck-zone .card-slot,
+body.common-decoration-mode-active .player-wrapper .grave-zone .card-slot,
+body.common-decoration-mode-active .player-wrapper .exclude-zone .card-slot,
+body.common-decoration-mode-active .opponent-wrapper .deck-zone .card-slot,
+body.common-decoration-mode-active .opponent-wrapper .side-deck-zone .card-slot,
+body.common-decoration-mode-active .opponent-wrapper .grave-zone .card-slot,
+body.common-decoration-mode-active .opponent-wrapper .exclude-zone .card-slot {
+    cursor: crosshair;  
+}
+
+body.common-decoration-mode-active .decoration-highlight {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: inset 0 0 0 3px #ff00ff, 0 0 10px rgba(255, 0, 255, 0.7) !important;
+    border-radius: 5px;
+    transition: background-color 0.3s, box-shadow 0.3s, opacity 0.3s ease;
+    opacity: 1 !important;
+}
+
+body.common-decoration-mode-active .game-board .mana-zone,
+body.common-decoration-mode-active .game-board .special-zone-1,
+body.common-decoration-mode-active .game-board .battle-zone,
+body.common-decoration-mode-active .game-board .spell-zone,
+body.common-decoration-mode-active .game-board .special-zone-2,
+body.common-decoration-mode-active .hand-controls-frame,
+body.common-decoration-mode-active .hand-zone-slots,
+body.common-decoration-mode-active .extra-area-wrapper {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+/* Cost Warning Styles */
+.card-slot.cost-ok-active {
+    box-shadow: 0 0 0 2px #00ff00, 0 0 10px #00ff00 !important;
+    border-color: #00ff00 !important;
+}
+
+.card-slot.cost-warning-active {
+    box-shadow: 0 0 0 2px #ff0000, 0 0 10px #ff0000 !important;
+    border-color: #ff0000 !important;
+    background-color: rgba(255, 0, 0, 0.2) !important;
+}
+
+/* --- Card Counter Overlay (Standard) --- */
+.thumbnail .card-counter-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5em; 
+    font-weight: bold;
+    color: white; 
+    text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+        -2px  0   0 #000,
+         2px  0   0 #000,
+         0   -2px 0 #000,
+         0    2px 0 #000;
+    background-color: rgba(0, 0, 0, 0.0); 
+    padding: 5px;
+    border-radius: 50%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 15; 
+    user-select: none;
+    pointer-events: none; 
+    display: none; 
+}
+
+.opponent-wrapper .thumbnail .card-counter-overlay {
+    transform: translate(-50%, -50%) scaleY(-1) translateZ(0);
+    z-index: 20; 
+}
+
+body.board-flipped .opponent-wrapper .thumbnail .card-counter-overlay {
+    transform: translate(-50%, -50%); 
+}
+body.board-flipped .player-wrapper .thumbnail .card-counter-overlay {
+    transform: translate(-50%, -50%) scaleY(-1) translateZ(0);
+    z-index: 20;
+}
+
+/* --- Custom Counter Badges --- */
+.custom-counter-container {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap-reverse; 
+    gap: 1px;
+    z-index: 25; 
+    pointer-events: none;
+    padding: 0 2px;
+    box-sizing: border-box;
+}
+
+.custom-counter-item {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform 0.1s;
+}
+.custom-counter-item:hover { transform: scale(1.2); z-index: 30; }
+.custom-counter-item:active { transform: scale(0.9); }
+.custom-counter-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(0,0,0,0.8));
+}
+
+.counter-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -4px;
+    background-color: #ff0000;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    border-radius: 50%;
+    min-width: 12px;
+    height: 12px;
+    padding: 0 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+
+.opponent-wrapper .counter-badge {
+    transform: scaleY(-1);
+}
+body.board-flipped .player-wrapper .counter-badge {
+    transform: scaleY(-1);
+}
+body.board-flipped .opponent-wrapper .counter-badge {
+    transform: scaleY(1);
+}
+
+/* --- Selected Card Highlight --- */
+.thumbnail.selected-card {
+    box-shadow: 0 0 0 3px #00ff00, 0 0 10px #00ff00 !important; 
+    z-index: 100;
+}
+
+/* --- Hand Concealment (Turn-based) --- */
+body.turn-player-active #opponent-hand-zone .thumbnail .card-image,
+body.turn-opponent-active #hand-zone .thumbnail .card-image {
+    content: url("./decoration/デッキ.png");
+    object-fit: fill; 
+}

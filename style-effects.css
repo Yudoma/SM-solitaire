@@ -1,0 +1,346 @@
+@keyframes masturbate-glow {
+    0% { filter: brightness(1) drop-shadow(0 0 2px #ff69b4); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 10px #ff1493); }
+    100% { filter: brightness(1) drop-shadow(0 0 2px #ff69b4); }
+}
+
+@keyframes permanent-glow {
+    0% { filter: brightness(1) drop-shadow(0 0 2px #00ffff); }
+    50% { filter: brightness(1.2) drop-shadow(0 0 10px #00ced1); }
+    100% { filter: brightness(1) drop-shadow(0 0 2px #00ffff); }
+}
+
+@keyframes effect-flash {
+    0% { filter: brightness(1); }
+    25% { filter: brightness(2) drop-shadow(0 0 15px gold); }
+    100% { filter: brightness(1); }
+}
+
+@keyframes attack-flash {
+    0% { filter: brightness(1); }
+    25% { filter: brightness(1.7) drop-shadow(0 0 15px #FF4500); } 
+    100% { filter: brightness(1); }
+}
+
+@keyframes target-lock {
+    0% { box-shadow: 0 0 0 rgba(255, 0, 0, 0); filter: sepia(0); }
+    50% { box-shadow: 0 0 15px red; filter: sepia(1) hue-rotate(-50deg) saturate(5); }
+    100% { box-shadow: 0 0 0 rgba(255, 0, 0, 0); filter: sepia(0); }
+}
+
+@keyframes floatUpFadeOut {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -150%);
+    }
+}
+
+@keyframes phaseCutIn {
+    0% {
+        opacity: 0;
+        transform: translateX(100vw);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    85% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-100vw);
+    }
+}
+
+.thumbnail[data-is-masturbating="true"]:not(.effect-active):not(.attack-active):not(.target-active) .card-image {
+    animation: masturbate-glow 2s infinite ease-in-out;
+}
+
+.thumbnail[data-is-permanent="true"]:not(.effect-active):not(.attack-active):not(.target-active) .card-image {
+    animation: permanent-glow 2s infinite ease-in-out;
+}
+
+.thumbnail.summoning-sickness {
+    box-shadow: 0 0 5px 1px rgba(255, 140, 0, 0.6); 
+}
+
+.thumbnail.summoning-sickness::after {
+    content: '';
+    position: absolute;
+    bottom: 30px; 
+    right: 2px;
+    width: 24px;
+    height: 24px;
+    background-image: url('./decoration/召喚酔い.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 20;
+    pointer-events: none;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.8));
+    opacity: 0.9;
+}
+
+.effect-active .card-image {
+    animation: effect-flash 0.6s ease-out;
+}
+
+.attack-active .card-image {
+    animation: attack-flash 0.6s ease-out;
+    z-index: 20;
+}
+
+.target-active .card-image {
+    animation: target-lock 0.8s ease-in-out;
+}
+
+.player-wrapper.auto-decrease-active,
+.opponent-wrapper.auto-decrease-active {
+    box-shadow: 0 0 15px #ff1493, inset 0 0 15px #ff1493;
+    transition: box-shadow 0.5s ease-in-out;
+}
+
+.blocker-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 6;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blocker-overlay img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.6;
+}
+
+.floating-text-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5em;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    animation: floatUpFadeOut 1.5s ease-out forwards;
+}
+
+.popup-decrease {
+    color: #ff4444; 
+}
+
+.popup-increase {
+    color: #44ff44; 
+}
+
+.popup-bp-increase { color: #32cd32; } 
+.popup-bp-decrease { color: #ff4500; } 
+
+.popup-lp-increase { color: #ffd700; } 
+.popup-lp-decrease { color: #dc143c; } 
+
+.popup-mana-increase { color: #00ffff; } 
+.popup-mana-decrease { color: #1e90ff; } 
+
+.popup-hyphen-increase { color: #ffffff; }
+.popup-hyphen-decrease { color: #aaaaaa; }
+
+.bp-decrease-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff4444;
+    font-size: 1.5em;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+    animation: floatUpFadeOut 1.5s ease-out forwards;
+}
+
+#playmat-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    z-index: -1;
+    display: none;
+}
+
+body.playmat-active #playmat-background {
+    display: block;
+}
+
+body.playmat-active .main-container {
+    background-color: rgba(0, 0, 0, 0.1) !important; 
+}
+
+body.playmat-active .player-wrapper .game-board,
+body.playmat-active .opponent-wrapper .game-board,
+body.playmat-active .player-wrapper .zone,
+body.playmat-active .opponent-wrapper .zone,
+body.playmat-active .player-wrapper .hand-controls-frame,
+body.playmat-active .opponent-wrapper .hand-controls-frame,
+body.playmat-active .player-wrapper .hand-zone-slots,
+body.playmat-active .opponent-wrapper .hand-zone-slots,
+body.playmat-active .player-wrapper .extra-area-wrapper,
+body.playmat-active .opponent-wrapper .extra-area-wrapper {
+    background-color: rgba(40, 40, 60, 0.4) !important; 
+    box-shadow: none; 
+}
+
+body.playmat-active .card-slot,
+body.playmat-active .card-slot[data-has-card="false"] {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+body.playmat-active .zone-header {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    opacity: 1 !important;
+}
+
+body.playmat-active #opponent-extra-image-zone,
+body.playmat-active #extra-image-zone {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+body.playmat-active .common-preview-wrapper {
+    background-color: rgba(42, 42, 78, 0.9) !important; 
+}
+
+body.playmat-active .card-preview-area {
+    background-color: #2a2a4e !important; 
+    opacity: 1 !important;
+}
+
+.battle-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent; 
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 80px;
+    pointer-events: none; 
+}
+
+.battle-message-container {
+    background-color: rgba(40, 0, 0, 0.9);
+    padding: 15px 30px;
+    border-radius: 8px;
+    border: 2px solid #ff4444;
+    text-align: center;
+    pointer-events: auto;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.battle-message {
+    color: #ffcccc;
+    font-size: 1.4em;
+    font-weight: bold;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+body.battle-target-mode .thumbnail:not(.battle-target-candidate):not(.battle-attacker),
+body.battle-target-mode .player-icon-slot:not(.battle-target-candidate) {
+    filter: brightness(0.4) grayscale(0.5);
+    transition: filter 0.3s ease;
+}
+
+body.battle-target-mode .thumbnail.battle-target-candidate,
+body.battle-target-mode .player-icon-slot.battle-target-candidate {
+    filter: drop-shadow(0 0 5px #ffae00) !important;
+    cursor: crosshair !important;
+    z-index: 100;
+    position: relative; 
+}
+
+body.battle-target-mode .thumbnail.battle-attacker {
+    filter: drop-shadow(0 0 5px #00ccff) !important;
+    z-index: 101;
+    position: relative;
+}
+
+body.battle-target-mode .thumbnail.battle-target-candidate:hover,
+body.battle-target-mode .player-icon-slot.battle-target-candidate:hover {
+    filter: drop-shadow(0 0 15px #ff4400) !important;
+    transform: scale(1.05);
+    transition: transform 0.1s ease-in-out;
+}
+
+body.battle-target-mode .hand-buttons button,
+body.battle-target-mode .drawer-toggle,
+body.battle-target-mode .step-btn,
+body.battle-target-mode .turn-btn,
+body.battle-target-mode .counter-btn {
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+body.battle-target-mode #battle-cancel-btn {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+#phase-cutin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+    display: none; 
+    background-color: transparent; 
+    pointer-events: none; 
+    justify-content: center; 
+    align-items: center;
+}
+
+#phase-cutin-text {
+    font-size: 4em; 
+    font-weight: bold; 
+    color: #fff; 
+    text-shadow: 0 0 10px #000, 0 0 20px #ff00ff; 
+    opacity: 0; 
+    transform: translateX(100vw);
+}
+
+.phase-cutin-animate {
+    animation: phaseCutIn 2s ease-in-out forwards;
+}
+
+.keyboard-focus {
+    box-shadow: 0 0 0 3px #00ffff, 0 0 15px rgba(0, 255, 255, 0.8) !important;
+    z-index: 35 !important;
+    transition: all 0.1s ease-out;
+    outline: none !important;
+}
