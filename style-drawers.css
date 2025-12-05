@@ -24,7 +24,7 @@ body {
 
 .drawer-wrapper {
     position: fixed;
-    right: 10px;
+    right: 45px;
     z-index: 600;
     background-color: #2a2a4e; 
     border: 2px solid #5a5a9a;
@@ -74,6 +74,7 @@ body.board-flipped #opponent-drawer {
     border-color: #4a8a6a;
     color: #e0f0e8;
     height: 44.5vh;
+    z-index: 650;
 }
 
 #c-drawer.open {

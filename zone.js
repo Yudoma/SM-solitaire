@@ -419,15 +419,20 @@ function handleSlotClick(e) {
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         fileInput.style.display = 'none';
+        
+        document.body.appendChild(fileInput);
+
         fileInput.onchange = (event) => {
-            try {
-                const file = event.target.files[0];
-                if (!file) {
+            const file = event.target.files[0];
+            if (!file) {
+                if (document.body.contains(fileInput)) {
                     document.body.removeChild(fileInput);
-                    return;
                 }
-                const reader = new FileReader();
-                reader.onload = async (readEvent) => {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async (readEvent) => {
+                try {
                     const idPrefix = getPrefixFromZoneId(getParentZoneId(slot));
                     
                     if (!await checkMainPhaseWarning(baseParentZoneId)) return;
@@ -469,7 +474,7 @@ function handleSlotClick(e) {
                         await new Promise(r => {
                             tempImg.onload = r;
                             tempImg.onerror = r;
-                            tempImg.src = imageUrl;
+                            tempImg.src = imageData;
                         });
                         if (tempImg.height > tempImg.width) {
                             rotation = 90;
@@ -536,22 +541,16 @@ function handleSlotClick(e) {
                     if (typeof window.updateSummoningSicknessVisuals === 'function') {
                         window.updateSummoningSicknessVisuals();
                     }
-                };
-                reader.readAsDataURL(file);
-            } catch (error) {
-                console.error("File read failed:", error);
-            } finally {
-                 if (document.body.contains(fileInput)) {
-                    document.body.removeChild(fileInput);
+                } catch (error) {
+                    console.error("File read failed:", error);
+                } finally {
+                     if (document.body.contains(fileInput)) {
+                        document.body.removeChild(fileInput);
+                    }
                 }
-            }
+            };
+            reader.readAsDataURL(file);
         };
-        fileInput.oncancel = () => {
-            if (document.body.contains(fileInput)) {
-                document.body.removeChild(fileInput);
-            }
-        };
-        document.body.appendChild(fileInput);
         
         isFileDialogOpen = true;
         fileInput.click();
@@ -985,7 +984,17 @@ async function handleCardDrop(draggedItem, targetSlot, idPrefix) {
 
                 const thumb = createCardThumbnail(cardData, destSlot, false, false, cardData.ownerPrefix);
                 
-                if (targetBaseZoneId === 'extra-image-zone') thumb.dataset.timestamp = Date.now();
+                if (targetBaseZoneId === 'extra-image-zone') {
+                    thumb.dataset.timestamp = Date.now();
+                    const img = thumb.querySelector('.card-image');
+                    if (img && img.naturalHeight > img.naturalWidth) {
+                        const r = 90;
+                        img.dataset.rotation = r;
+                        const { width, height } = getCardDimensions();
+                        const scaleFactor = height / width;
+                        img.style.transform = `rotate(${r}deg) scale(${scaleFactor})`;
+                    }
+                }
                 if (targetBaseZoneId === 'c-free-space') delete thumb.dataset.ownerPrefix;
 
                 updateSlotStackState(destSlot);
@@ -1123,7 +1132,7 @@ async function handleCardDrop(draggedItem, targetSlot, idPrefix) {
              const container = document.getElementById(containerId);
              if (!container) return;
              
-             const slotsContainer = container.querySelector('.deck-back-slot-container, .free-space-slot-container, .hand-zone-slots') || container;
+             const slotsContainer = container.querySelector('.deck-back-slot-container, .free-space-slot-container, .token-slot-container, .hand-zone-slots') || container;
              const emptySlot = Array.from(slotsContainer.querySelectorAll('.card-slot')).find(s => !s.querySelector('.thumbnail'));
              
              if (!emptySlot) {
@@ -1143,7 +1152,17 @@ async function handleCardDrop(draggedItem, targetSlot, idPrefix) {
 
         const thumb = createCardThumbnail(cardData, destSlot, false, false, newOwnerPrefix);
         
-        if (targetBaseZoneId === 'extra-image-zone') thumb.dataset.timestamp = Date.now();
+        if (targetBaseZoneId === 'extra-image-zone') {
+            thumb.dataset.timestamp = Date.now();
+            const img = thumb.querySelector('.card-image');
+            if (img && img.naturalHeight > img.naturalWidth) {
+                const r = 90;
+                img.dataset.rotation = r;
+                const { width, height } = getCardDimensions();
+                const scaleFactor = height / width;
+                img.style.transform = `rotate(${r}deg) scale(${scaleFactor})`;
+            }
+        }
         if (targetBaseZoneId === 'c-free-space') delete thumb.dataset.ownerPrefix;
         
         if (targetBaseZoneId.startsWith('mana')) {
@@ -1317,6 +1336,29 @@ async function handleCardDrop(draggedItem, targetSlot, idPrefix) {
             if(thumb) delete thumb.dataset.ownerPrefix;
         }
     });
+
+    if (targetBaseZoneId === 'extra-image-zone') {
+        const thumb = targetSlot.querySelector('.thumbnail');
+        if (thumb) {
+            const img = thumb.querySelector('.card-image');
+            if (img) {
+                const checkAndRotate = () => {
+                    if (img.naturalHeight > img.naturalWidth) {
+                        const r = 90;
+                        img.dataset.rotation = r;
+                        const { width, height } = getCardDimensions();
+                        const scaleFactor = height / width;
+                        img.style.transform = `rotate(${r}deg) scale(${scaleFactor})`;
+                    } else {
+                        img.dataset.rotation = 0;
+                        img.style.transform = 'rotate(0deg)';
+                    }
+                };
+                if (img.complete) checkAndRotate();
+                else img.onload = checkAndRotate;
+            }
+        }
+    }
 
     if (targetBaseZoneId.startsWith('mana') && !sourceBaseZoneId.startsWith('mana')) {
         tryAutoManaTapIn(targetSlot, idPrefix, targetZoneId);

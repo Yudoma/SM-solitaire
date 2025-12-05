@@ -596,7 +596,8 @@ function exportDeck(idPrefix, fileName = 'deck') {
                 exclude: extractZoneData(idPrefix + 'exclude', true),
                 icon: extractZoneData(idPrefix + 'icon-zone', true),
             },
-            customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {} 
+            customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {},
+            customCounterTypes: typeof customCounterTypes !== 'undefined' ? customCounterTypes : []
         };
         const jsonData = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
@@ -643,6 +644,17 @@ function importDeck(idPrefix) {
                     const targetKey = idPrefix ? 'opponent' : 'player';
                     if (importData.customIcons[targetKey]) {
                         customIconStocks[targetKey] = importData.customIcons[targetKey];
+                    }
+                }
+
+                if (importData.customCounterTypes && Array.isArray(importData.customCounterTypes)) {
+                    if (typeof customCounterTypes !== 'undefined') {
+                        const existingIds = new Set(customCounterTypes.map(c => String(c.id)));
+                        importData.customCounterTypes.forEach(c => {
+                            if (!existingIds.has(String(c.id))) {
+                                customCounterTypes.push(c);
+                            }
+                        });
                     }
                 }
                 

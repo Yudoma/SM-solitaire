@@ -136,7 +136,6 @@ function createEmptySampleSlot(container, index) {
     emptyText.textContent = '-';
     thumbArea.appendChild(emptyText);
     
-    // Add dummy controls to keep UI consistent
     const controls = document.createElement('div');
     controls.className = 'deck-case-controls';
     const row = document.createElement('div');
