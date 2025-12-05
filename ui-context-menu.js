@@ -15,10 +15,6 @@ function closeContextMenu() {
         hasSubmenus.forEach(li => {
             li.style.display = ''; 
         });
-
-        if (exportPreviewMenuItem) {
-            exportPreviewMenuItem.style.display = 'none';
-        }
     }
     
     currentDeleteHandler = null;
@@ -98,55 +94,9 @@ function handleStockItemContextMenu(e, item, targetType, owner, container) {
     contextMenu.style.visibility = 'visible';
 }
 
-function handlePreviewAreaContextMenu(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!contextMenu) return;
-
-    const allItems = contextMenu.querySelectorAll('li');
-    allItems.forEach(li => li.style.display = 'none');
-    const topItems = contextMenu.querySelectorAll('#custom-context-menu > ul > li');
-    topItems.forEach(li => li.style.display = 'none');
-    
-    if (exportPreviewMenuItem) {
-        exportPreviewMenuItem.style.display = 'block';
-    }
-    
-    currentPreviewExportHandler = () => {
-        if (typeof exportCardPreviewAsImage === 'function') {
-            exportCardPreviewAsImage();
-        }
-    };
-    
-    contextMenu.style.display = 'block';
-    contextMenu.style.visibility = 'hidden';
-    contextMenu.style.zIndex = '10005'; 
-    
-    const menuWidth = contextMenu.offsetWidth;
-    const menuHeight = contextMenu.offsetHeight;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    let left = e.pageX;
-    let top = e.pageY;
-
-    if (left + menuWidth > windowWidth) left -= menuWidth;
-    if (top + menuHeight > windowHeight) top -= menuHeight;
-
-    contextMenu.style.top = `${top}px`;
-    contextMenu.style.left = `${left}px`;
-    contextMenu.style.visibility = 'visible';
-}
-
 function setupContextMenuListeners() {
     if (contextMenu) {
         contextMenu.addEventListener('contextmenu', (e) => e.preventDefault());
-    }
-
-    const commonPreviewArea = document.getElementById('common-card-preview');
-    if (commonPreviewArea) {
-        commonPreviewArea.addEventListener('contextmenu', handlePreviewAreaContextMenu);
     }
 
     if (actionMenuItem) {
@@ -211,41 +161,54 @@ function setupContextMenuListeners() {
     }
     
     if (attackMenuItem) {
-        attackMenuItem.addEventListener('click', () => {
-            const target = lastRightClickedElement;
-            if (!target) {
+        attackMenuItem.addEventListener('click', async () => {
+            let targets = [];
+            if (typeof selectedCards !== 'undefined' && selectedCards.length > 0 && selectedCards.includes(lastRightClickedElement)) {
+                targets = [...selectedCards];
+            } else if (lastRightClickedElement) {
+                targets = [lastRightClickedElement];
+            }
+
+            if (targets.length === 0) {
                 closeContextMenu();
                 return;
             }
 
             if (typeof currentStepIndex !== 'undefined' && currentStepIndex !== 4) { 
-                if (typeof confirmWarning === 'function' && !confirmWarning('warnAttackPhase', '現在バトルステップではありません。攻撃しますか？')) {
+                if (typeof confirmWarning === 'function' && !await confirmWarning('warnAttackPhase', '現在バトルステップではありません。攻撃しますか？')) {
                     closeContextMenu();
                     return;
                 }
             }
 
-            const inBattleZone = target.closest('.battle-zone');
-            if (!inBattleZone) {
-                 if (typeof confirmWarning === 'function' && !confirmWarning('warnAttackPhase', 'バトルエリア以外からは攻撃できません。攻撃しますか？')) {
+            const allInBattleZone = targets.every(t => t.closest('.battle-zone'));
+            if (!allInBattleZone) {
+                 if (typeof confirmWarning === 'function' && !await confirmWarning('warnAttackPhase', 'バトルエリア以外からは攻撃できません。攻撃しますか？')) {
                      closeContextMenu();
                      return;
                  }
             }
 
-            const deployedTurn = parseInt(target.dataset.deployedTurn);
             const currentTurnInput = document.getElementById('common-turn-value');
             const currentTurn = currentTurnInput ? parseInt(currentTurnInput.value) : null;
+            let hasSickness = false;
 
-            if (deployedTurn && currentTurn && deployedTurn === currentTurn) {
-                if (typeof confirmWarning === 'function' && !confirmWarning('warnSummoningSickness', 'このカードはこのターンに配置されました（召喚酔い）。攻撃しますか？')) {
+            if (currentTurn) {
+                hasSickness = targets.some(t => {
+                    const deployedTurn = parseInt(t.dataset.deployedTurn);
+                    return deployedTurn && deployedTurn === currentTurn;
+                });
+            }
+
+            if (hasSickness) {
+                if (typeof confirmWarning === 'function' && !await confirmWarning('warnSummoningSickness', '召喚酔いのカードが含まれています。攻撃しますか？')) {
                     closeContextMenu();
                     return;
                 }
             }
 
             if (typeof startBattleTargetSelection === 'function') {
-                startBattleTargetSelection(target);
+                startBattleTargetSelection(targets);
             }
             closeContextMenu();
         });
@@ -509,7 +472,7 @@ function setupContextMenuListeners() {
     }
 
     if (masturbateMenuItem) {
-        masturbateMenuItem.addEventListener('click', () => { 
+        masturbateMenuItem.addEventListener('click', async () => { 
             let targets = [lastRightClickedElement];
             if (typeof selectedCards !== 'undefined' && selectedCards.length > 0 && selectedCards.includes(lastRightClickedElement)) {
                 targets = selectedCards;
@@ -519,7 +482,7 @@ function setupContextMenuListeners() {
             const newState = !anyMasturbating;
     
             if (newState) {
-                if (typeof confirmWarning === 'function' && !confirmWarning('warnMasturbateDrain', 'オナニーを開始するとBPが自動減少します。よろしいですか？')) {
+                if (typeof confirmWarning === 'function' && !await confirmWarning('warnMasturbateDrain', 'オナニーを開始するとBPが自動減少します。よろしいですか？')) {
                     closeContextMenu();
                     return;
                 }
@@ -570,14 +533,6 @@ function setupContextMenuListeners() {
             if (typeof openDecorationSettingsModal === 'function') {
                 openDecorationSettingsModal();
             }
-            closeContextMenu();
-        });
-    }
-    
-    if (exportPreviewMenuItem) {
-        exportPreviewMenuItem.addEventListener('click', () => {
-            playSe('ボタン共通.mp3');
-            if (typeof currentPreviewExportHandler === 'function') currentPreviewExportHandler();
             closeContextMenu();
         });
     }
@@ -653,10 +608,4 @@ function getSlotByIndex(zoneId, index) {
     const container = zone.querySelector('.slot-container, .deck-back-slot-container, .free-space-slot-container, .token-slot-container, .hand-zone-slots') || zone;
     const slots = container.querySelectorAll('.card-slot');
     return slots[index] || null;
-}
-
-function confirmWarning(configKey, message) {
-    if (typeof autoConfig === 'undefined') return true;
-    if (!autoConfig[configKey]) return true; 
-    return window.confirm(message);
 }

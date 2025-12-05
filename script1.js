@@ -452,10 +452,10 @@ function updateReplayUI(state) {
     }
 }
 
-function playReplay() {
+async function playReplay() {
     if (!replayInitialState || actionLog.length === 0) {
         if (typeof showCustomAlert === 'function') {
-            showCustomAlert("再生するリプレイデータがありません。");
+            await showCustomAlert("再生するリプレイデータがありません。");
         } else {
             alert("再生するリプレイデータがありません。");
         }
@@ -495,7 +495,7 @@ function resumeReplay() {
     processNextReplayStep(100);
 }
 
-function stopReplay() {
+async function stopReplay() {
     isPlaying = false;
     isReplayPaused = false;
     currentReplayIndex = 0;
@@ -511,12 +511,13 @@ function stopReplay() {
 function processNextReplayStep(forceDelay = null) {
     if (!isPlaying || isReplayPaused) return;
     if (currentReplayIndex >= actionLog.length) {
-        stopReplay();
-        if (typeof showCustomAlert === 'function') {
-            showCustomAlert("リプレイ再生が終了しました。");
-        } else {
-            alert("リプレイ再生が終了しました。");
-        }
+        stopReplay().then(() => {
+            if (typeof showCustomAlert === 'function') {
+                showCustomAlert("リプレイ再生が終了しました。");
+            } else {
+                alert("リプレイ再生が終了しました。");
+            }
+        });
         return;
     }
 
@@ -586,6 +587,7 @@ function executeAction(action) {
                         const zId = getParentZoneId(slot);
                         if (zId && zId.endsWith('-back-slots')) arrangeSlots(zId);
                         const baseId = getBaseId(zId);
+                        const decorationZones = ['deck', 'grave', 'exclude', 'side-deck'];
                         if (decorationZones.includes(baseId)) syncMainZoneImage(baseId, getPrefixFromZoneId(zId));
                     });
                     
@@ -612,6 +614,7 @@ function executeAction(action) {
                 const zId = getParentZoneId(slot);
                 if (zId && zId.endsWith('-back-slots')) arrangeSlots(zId);
                 
+                const decorationZones = ['deck', 'grave', 'exclude', 'side-deck'];
                 if (decorationZones.includes(baseId)) syncMainZoneImage(baseId, prefix);
                 
                 updatePreviewForAction(action.zoneId, action.slotIndex);
@@ -910,8 +913,245 @@ function getSlotByIndex(zoneId, index) {
     return slots[index] || null;
 }
 
-function confirmWarning(configKey, message) {
+async function confirmWarning(configKey, message) {
     if (typeof autoConfig === 'undefined') return true;
     if (!autoConfig[configKey]) return true; 
-    return window.confirm(message);
+    
+    if (typeof showCustomConfirm === 'function') {
+        return await showCustomConfirm(message);
+    } else {
+        return window.confirm(message);
+    }
+}
+
+function setupCounters(idPrefix) {
+    const lpCounter = document.getElementById(idPrefix + 'counter-value');
+    const manaCounter = document.getElementById(idPrefix + 'mana-counter-value');
+    const hyphenCounter = document.getElementById(idPrefix + 'hyphen-counter-value');
+    
+    const attachAutoDecreaseLogic = (btnId, counter, intervalInputId) => {
+        const btns = document.querySelectorAll(`[id="${btnId}"]`);
+        
+        btns.forEach(btn => {
+            if (btn.hasAttribute('data-value')) return;
+
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            btn = newBtn; 
+
+            if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+
+            const wrapperClass = idPrefix ? '.opponent-wrapper' : '.player-wrapper';
+            const wrapper = document.querySelector(wrapperClass);
+
+            btn.addEventListener('click', (e) => {
+                const currentBtn = e.currentTarget;
+                e.stopPropagation(); 
+
+                if (currentBtn._decreaseTimerId) {
+                    clearInterval(currentBtn._decreaseTimerId);
+                    currentBtn._decreaseTimerId = null;
+                    currentBtn.textContent = currentBtn.dataset.originalText;
+                    currentBtn.style.backgroundColor = '';
+                    currentBtn.style.boxShadow = '';
+                    if(wrapper) wrapper.classList.remove('auto-decrease-active');
+                    stopSe('自動減少.mp3');
+                    playSe('ボタン共通.mp3');
+                } else {
+                    if (currentBtn.textContent !== '停止') currentBtn.dataset.originalText = currentBtn.textContent;
+                    currentBtn.textContent = '停止';
+                    currentBtn.style.backgroundColor = '#cc0000';
+                    currentBtn.style.boxShadow = '0 2px #800000';
+                    if(wrapper) wrapper.classList.add('auto-decrease-active');
+                    playSe('自動減少.mp3', true);
+                    
+                    let interval = 1000;
+                    const input = document.getElementById(intervalInputId);
+                    if (input) {
+                        const val = parseFloat(input.value);
+                        if (!isNaN(val) && val > 0) {
+                            interval = val * 1000;
+                        }
+                    }
+
+                    currentBtn._decreaseTimerId = setInterval(() => {
+                        let currentVal = 0;
+                        let isInput = counter.tagName === 'INPUT';
+                        
+                        if (isInput) {
+                            currentVal = parseInt(counter.value) || 0;
+                        } else {
+                            currentVal = parseInt(counter.textContent) || 0;
+                        }
+                        
+                        const newVal = Math.max(0, currentVal - 1);
+                        
+                        if (currentVal !== newVal) {
+                            if (isInput) {
+                                counter.value = newVal;
+                            } else {
+                                counter.textContent = newVal;
+                            }
+                            
+                            let targetIcon = null;
+                            let labelText = '';
+                            let type = 'default';
+                            
+                            if (counter.id.includes('hyphen')) {
+                                const headerInput = counter.parentNode.querySelector('.header-input');
+                                labelText = headerInput ? headerInput.value : 'Status';
+                                type = 'Hyphen';
+                                const isOpp = idPrefix === 'opponent-';
+                                const iconId = isOpp ? 'opponent-icon-zone' : 'icon-zone';
+                                targetIcon = document.getElementById(iconId);
+                            }
+                            else if (counter.id.includes('lp') || (counter.id.includes('counter-value') && !counter.id.includes('mana'))) {
+                                labelText = 'LP';
+                                type = 'LP';
+                                const isOpp = idPrefix === 'opponent-';
+                                const iconId = isOpp ? 'opponent-icon-zone' : 'icon-zone';
+                                targetIcon = document.getElementById(iconId);
+                            } 
+                            else if (counter.id.includes('mana')) {
+                                labelText = 'マナ';
+                                type = 'Mana';
+                                const isOpp = idPrefix === 'opponent-';
+                                const iconId = isOpp ? 'opponent-icon-zone' : 'icon-zone';
+                                targetIcon = document.getElementById(iconId);
+                            }
+
+                            if (targetIcon) {
+                                if (typeof showFloatingPopup === 'function') showFloatingPopup(targetIcon, -1, labelText, type);
+                            } else {
+                                if (typeof showFloatingPopup === 'function') showFloatingPopup(counter, -1, labelText, type);
+                            }
+                        }
+                        
+                        if (newVal === 0 && counter.classList.contains('lp-counter-input') && typeof autoConfig !== 'undefined' && autoConfig.autoGameEnd) {
+                            clearInterval(currentBtn._decreaseTimerId);
+                            currentBtn._decreaseTimerId = null;
+                            currentBtn.textContent = currentBtn.dataset.originalText;
+                            currentBtn.style.backgroundColor = '';
+                            currentBtn.style.boxShadow = '';
+                            if(wrapper) wrapper.classList.remove('auto-decrease-active');
+                            stopSe('自動減少.mp3');
+                            
+                            const msg = idPrefix ? 'YOU WIN!' : 'YOU LOSE...';
+                            if (typeof window.showGameResult === 'function') {
+                                window.showGameResult(msg);
+                            }
+                        }
+                    }, interval);
+                }
+            });
+        });
+    };
+
+    const intervalId = idPrefix ? 'opponent-auto-decrease-interval' : 'player-auto-decrease-interval';
+    attachAutoDecreaseLogic(idPrefix + 'lp-auto-decrease-btn', lpCounter, intervalId);
+    attachAutoDecreaseLogic(idPrefix + 'mana-auto-decrease-btn', manaCounter, intervalId);
+    attachAutoDecreaseLogic(idPrefix + 'hyphen-auto-decrease-btn', hyphenCounter, intervalId);
+
+    const counterWrapperId = idPrefix ? idPrefix + 'counter-wrapper' : 'player-counter-wrapper';
+    const counterWrapper = document.getElementById(counterWrapperId);
+    
+    counterWrapper?.querySelectorAll('.counter-btn[data-value]').forEach(originalButton => {
+        const button = originalButton.cloneNode(true);
+        originalButton.parentNode.replaceChild(button, originalButton);
+
+        const value = parseInt(button.dataset.value);
+        const group = button.closest('.hand-counter-group');
+        const targetCounter = group.querySelector('input[type="number"]') || group.querySelector('.hyphen-counter-input');
+        
+        let repeatTimer = null;
+        let initialTimer = null;
+        
+        const performUpdate = () => {
+            if(!targetCounter) return;
+            
+            if (typeof saveStateForUndo === 'function') saveStateForUndo();
+
+            let currentVal;
+            if (targetCounter.isContentEditable) {
+                currentVal = parseInt(targetCounter.textContent) || 0;
+                const newVal = Math.max(0, currentVal + value);
+                targetCounter.textContent = newVal;
+            } else {
+                currentVal = parseInt(targetCounter.value) || 0;
+                const newVal = Math.max(0, currentVal + value);
+                targetCounter.value = newVal;
+                
+                if (newVal === 0 && targetCounter.classList.contains('lp-counter-input') && typeof autoConfig !== 'undefined' && autoConfig.autoGameEnd) {
+                    const msg = idPrefix ? 'YOU WIN!' : 'YOU LOSE...';
+                    if (typeof window.showGameResult === 'function') window.showGameResult(msg);
+                }
+            }
+            
+            let labelText = '';
+            let type = 'default';
+            const areaLabel = group.querySelector('.area-label');
+            if (areaLabel) {
+                if (areaLabel.tagName === 'INPUT') labelText = areaLabel.value; 
+                else labelText = areaLabel.textContent; 
+            }
+
+            if (targetCounter.id.includes('lp') || (targetCounter.id.includes('counter-value') && !targetCounter.id.includes('mana'))) {
+                type = 'LP';
+            } else if (targetCounter.id.includes('mana')) {
+                type = 'Mana';
+            } else if (targetCounter.classList.contains('hyphen-counter-input')) {
+                type = 'Hyphen';
+            }
+
+            if (targetCounter.id.includes('counter-value')) {
+                const isOpponent = targetCounter.id.includes('opponent');
+                const iconSlotId = isOpponent ? 'opponent-icon-zone' : 'icon-zone';
+                const iconSlot = document.getElementById(iconSlotId);
+                
+                if (iconSlot) { 
+                    if (typeof showFloatingPopup === 'function') showFloatingPopup(iconSlot, value, labelText, type);
+                } else {
+                    if (typeof showFloatingPopup === 'function') showFloatingPopup(targetCounter, value, labelText, type);
+                }
+            } else {
+                if (typeof showFloatingPopup === 'function') showFloatingPopup(targetCounter, value, labelText, type);
+            }
+        };
+
+        const startAction = (e) => {
+            if (e.type === 'touchstart') {
+                e.preventDefault(); 
+            }
+            if (e.button !== undefined && e.button !== 0) return; 
+            
+            e.stopPropagation();
+
+            playSe('ボタン共通.mp3');
+            performUpdate();
+            
+            initialTimer = setTimeout(() => {
+                repeatTimer = setInterval(() => {
+                    performUpdate();
+                }, 200);
+            }, 300);
+        };
+        
+        const stopAction = (e) => {
+            if(e) e.stopPropagation(); 
+            clearTimeout(initialTimer);
+            clearInterval(repeatTimer);
+        };
+
+        button.addEventListener('mousedown', startAction);
+        button.addEventListener('mouseup', stopAction);
+        button.addEventListener('mouseleave', stopAction);
+        
+        button.addEventListener('touchstart', startAction, { passive: false });
+        button.addEventListener('touchend', stopAction);
+
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
 }

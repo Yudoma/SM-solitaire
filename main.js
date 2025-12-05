@@ -32,4 +32,42 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeBoard('.player-wrapper', '');
     initializeBoard('.opponent-wrapper', 'opponent-');
 
+    setTimeout(() => {
+        const playerDeckContainer = document.getElementById('deck-back-slots');
+        const hasCards = playerDeckContainer ? playerDeckContainer.querySelectorAll('.thumbnail').length > 0 : false;
+
+        if (!hasCards) {
+            fetch('sample/sample_deck_1.json')
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Sample deck not found');
+                })
+                .then(data => {
+                    if (typeof clearZoneData === 'function') {
+                        clearZoneData('deck-back-slots');
+                        clearZoneData('side-deck-back-slots');
+                        clearZoneData('free-space-slots');
+                        clearZoneData('token-zone-slots');
+                    }
+                    
+                    if (typeof applyDataToZone === 'function') {
+                        if (data.deck) applyDataToZone('deck-back-slots', data.deck);
+                        if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
+                        if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
+                        if (data.token) applyDataToZone('token-zone-slots', data.token);
+                    }
+                    
+                    if (typeof syncMainZoneImage === 'function') {
+                        syncMainZoneImage('deck', '');
+                        syncMainZoneImage('side-deck', '');
+                    }
+                    
+                    if (typeof window.updatePlaymatState === 'function') {
+                        window.updatePlaymatState();
+                    }
+                })
+                .catch(e => console.warn("初期サンプルデッキの読み込みに失敗しました:", e));
+        }
+    }, 500); 
+
 });

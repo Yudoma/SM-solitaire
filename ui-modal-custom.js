@@ -69,9 +69,6 @@ function openMemoEditor() {
     memoTextarea.focus();
     
     const currentSize = parseFloat(window.getComputedStyle(memoTextarea).fontSize);
-    if(memoFontSizeInput) memoFontSizeInput.value = currentSize;
-    if(memoWidthInput) memoWidthInput.value = memoEditorModal.offsetWidth;
-    if(memoHeightInput) memoHeightInput.value = memoEditorModal.offsetHeight;
     
     if (currentMemoTarget) {
         currentMemoOriginalText = currentMemoTarget.dataset.memo || '';
@@ -82,8 +79,8 @@ function updateMemoEditorStyle() {
     if (!memoEditorModal || !memoTextarea) return;
     
     const size = memoFontSizeInput ? memoFontSizeInput.value : 16;
-    const width = memoWidthInput ? memoWidthInput.value : 500;
-    const height = memoHeightInput ? memoHeightInput.value : 200;
+    const width = memoWidthInput ? memoWidthInput.value : 600;
+    const height = memoHeightInput ? memoHeightInput.value : 600;
     
     memoTextarea.style.fontSize = size + 'px';
     memoEditorModal.style.width = width + 'px';
@@ -734,6 +731,7 @@ function setupModalEvents() {
     [memoFontSizeInput, memoWidthInput, memoHeightInput].forEach(input => {
         if(input) input.addEventListener('input', updateMemoEditorStyle);
     });
+    updateMemoEditorStyle(); // 初期値を適用
 
     if (memoSaveBtn) {
         memoSaveBtn.addEventListener('click', () => {

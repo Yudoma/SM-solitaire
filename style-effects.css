@@ -58,6 +58,27 @@
     }
 }
 
+@keyframes status-float-anim {
+    0% { 
+        opacity: 0; 
+        transform: translate(-50%, 10px) scale(0.9); 
+    }
+    20% { 
+        opacity: 1; 
+        transform: translate(-50%, 0) scale(1.1); 
+        text-shadow: 0 0 10px #ff1493, 0 0 20px #ff69b4;
+    }
+    50% {
+        opacity: 0.9;
+        transform: translate(-50%, -10px) scale(1.0);
+    }
+    100% { 
+        opacity: 0; 
+        transform: translate(-50%, -30px) scale(0.95); 
+        filter: blur(2px);
+    }
+}
+
 .thumbnail[data-is-masturbating="true"]:not(.effect-active):not(.attack-active):not(.target-active) .card-image {
     animation: masturbate-glow 2s infinite ease-in-out;
 }
@@ -175,6 +196,51 @@
     animation: floatUpFadeOut 1.5s ease-out forwards;
 }
 
+.status-floating-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    overflow: visible;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 5px #ff00ff, 0 0 10px #000;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+    animation: status-float-anim 4s ease-in-out forwards;
+}
+
+.status-floating-pink {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    overflow: visible;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff0f5; 
+    text-shadow: 
+        0 0 5px #ff1493,
+        0 0 10px #ff69b4,
+        0 0 20px #ff00ff,
+        2px 2px 0px rgba(0,0,0,0.5); 
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+    animation: status-float-anim 5s ease-in-out forwards;
+    letter-spacing: 1px;
+}
+
 #playmat-background {
     position: fixed;
     top: 0;
@@ -203,16 +269,19 @@ body.playmat-active .opponent-wrapper .zone,
 body.playmat-active .player-wrapper .hand-controls-frame,
 body.playmat-active .opponent-wrapper .hand-controls-frame,
 body.playmat-active .player-wrapper .hand-zone-slots,
-body.playmat-active .opponent-wrapper .hand-zone-slots,
+body.playmat-active .opponent-wrapper .hand-zone-slots {
+    background-color: rgba(40, 40, 40, 0.4) !important; 
+    box-shadow: none; 
+}
+
 body.playmat-active .player-wrapper .extra-area-wrapper,
 body.playmat-active .opponent-wrapper .extra-area-wrapper {
-    background-color: rgba(40, 40, 60, 0.4) !important; 
-    box-shadow: none; 
+    background-color: rgba(51, 51, 51, 1) !important;
 }
 
 body.playmat-active .card-slot,
 body.playmat-active .card-slot[data-has-card="false"] {
-    background-color: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.0) !important;
 }
 
 body.playmat-active .zone-header {
@@ -226,11 +295,11 @@ body.playmat-active #extra-image-zone {
 }
 
 body.playmat-active .common-preview-wrapper {
-    background-color: rgba(42, 42, 78, 0.9) !important; 
+    background-color: rgba(40, 40, 40, 0.4) !important; 
 }
 
 body.playmat-active .card-preview-area {
-    background-color: #2a2a4e !important; 
+    background-color: #ffffff !important; 
     opacity: 1 !important;
 }
 

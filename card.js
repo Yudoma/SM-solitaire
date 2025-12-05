@@ -145,7 +145,7 @@ function addCardEventListeners(thumbnailElement) {
     thumbnailElement.addEventListener('mouseout', handleCardMouseOut);
 }
 
-function handleCardClick(e) {
+async function handleCardClick(e) {
     const thumbnailElement = e.target.closest('.thumbnail');
     if (!thumbnailElement) return;
     const slotElement = thumbnailElement.parentNode;
@@ -212,9 +212,14 @@ function handleCardClick(e) {
     if (currentRotation === 0) {
         if (baseParentZoneId.startsWith('mana')) {
             if (typeof currentStepIndex !== 'undefined' && currentStepIndex !== 3) { 
-                if (typeof confirmWarning === 'function' && !confirmWarning('warnManaPlacementPhase', '現在メインステップではありません。マナをタップしますか？')) {
-                    e.stopPropagation();
-                    return;
+                if (typeof autoConfig !== 'undefined' && autoConfig.warnManaPlacementPhase) {
+                    if (typeof showCustomConfirm === 'function') {
+                        const confirmed = await showCustomConfirm('現在メインステップではありません。マナをタップしますか？');
+                        if (!confirmed) {
+                            e.stopPropagation();
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -247,9 +252,14 @@ function handleCardClick(e) {
     } else {
         if (!baseParentZoneId.startsWith('mana')) {
             if (typeof currentStepIndex !== 'undefined' && currentStepIndex !== 2) { 
-                if (typeof confirmWarning === 'function' && !confirmWarning('warnUntapPhase', '現在アンタップステップではありません。カードをアンタップしますか？')) {
-                    e.stopPropagation();
-                    return;
+                if (typeof autoConfig !== 'undefined' && autoConfig.warnUntapPhase) {
+                    if (typeof showCustomConfirm === 'function') {
+                        const confirmed = await showCustomConfirm('現在アンタップステップではありません。カードをアンタップしますか？');
+                        if (!confirmed) {
+                            e.stopPropagation();
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -266,7 +276,7 @@ function handleCardClick(e) {
         recordAction({
             type: 'rotate',
             zoneId: parentZoneId,
-            slotIndex: Array.from(slotElement.parentNode.children).indexOf(slotElement),
+            slotIndex: Array.from(slot.parentNode.children).indexOf(slotElement),
             rotation: currentRotation
         });
     }
@@ -352,17 +362,17 @@ function handleCardContextMenu(e) {
     const slotIndex = Array.from(thumbnailElement.parentNode.parentNode.children).indexOf(thumbnailElement.parentNode);
 
     if (attackMenuItem) {
-        currentAttackHandler = () => {
-            triggerEffect(thumbnailElement, 'attack');
+        currentAttackHandler = async () => {
+            await triggerEffect(thumbnailElement, 'attack');
         };
     }
 
-    currentActionHandler = () => {
-        triggerEffect(thumbnailElement, 'effect');
+    currentActionHandler = async () => {
+        await triggerEffect(thumbnailElement, 'effect');
     };
     
-    currentTargetHandler = () => {
-        triggerEffect(thumbnailElement, 'target');
+    currentTargetHandler = async () => {
+        await triggerEffect(thumbnailElement, 'target');
     };
 
     if (permanentMenuItem) {
@@ -428,10 +438,11 @@ function handleCardContextMenu(e) {
         const isMasturbating = thumbnailElement.dataset.isMasturbating === 'true';
         masturbateMenuItem.textContent = isMasturbating ? 'オナニーを止める' : 'オナニーする';
 
-        currentMasturbateHandler = () => {
-            if (!isMasturbating && typeof confirmWarning === 'function') {
-                if (!confirmWarning('warnMasturbateDrain', 'オナニーを開始するとBPが自動減少します。よろしいですか？')) {
-                    return;
+        currentMasturbateHandler = async () => {
+            if (!isMasturbating && typeof autoConfig !== 'undefined' && autoConfig.warnMasturbateDrain) {
+                if (typeof showCustomConfirm === 'function') {
+                    const confirmed = await showCustomConfirm('オナニーを開始するとBPが自動減少します。よろしいですか？');
+                    if (!confirmed) return;
                 }
             }
 
@@ -471,7 +482,7 @@ function handleCardContextMenu(e) {
                     }
                 }
             }
-            closeContextMenu();
+            if(typeof closeContextMenu === 'function') closeContextMenu();
         };
     }
 
@@ -755,7 +766,7 @@ function deleteCard(thumbnailElement) {
     toggleMasturbation(thumbnailElement, false, true); 
 
     if (typeof isBattleConfirmMode !== 'undefined' && isBattleConfirmMode) {
-        if (thumbnailElement === currentAttacker || thumbnailElement === currentBattleTarget) {
+        if ((typeof currentAttackers !== 'undefined' && currentAttackers.includes(thumbnailElement)) || thumbnailElement === currentBattleTarget) {
             if (typeof closeBattleConfirmModal === 'function') closeBattleConfirmModal();
         }
     }
@@ -953,20 +964,26 @@ function removeBlockerOverlay(thumbnailElement) {
     if (overlay) thumbnailElement.removeChild(overlay);
 }
 
-function triggerEffect(thumbnailElement, type) {
+async function triggerEffect(thumbnailElement, type) {
     if (typeof effectConfig !== 'undefined' && effectConfig[type] === false) return;
 
     if (type === 'attack') {
         if (typeof currentStepIndex !== 'undefined' && currentStepIndex !== 4) { 
-            if (typeof confirmWarning === 'function' && !confirmWarning('warnAttackPhase', '現在バトルステップではありません。攻撃しますか？')) {
-                return;
+            if (typeof autoConfig !== 'undefined' && autoConfig.warnAttackPhase) {
+                if (typeof showCustomConfirm === 'function') {
+                    const confirmed = await showCustomConfirm('現在バトルステップではありません。攻撃しますか？');
+                    if (!confirmed) return;
+                }
             }
         }
 
         const inBattleZone = thumbnailElement.closest('.battle-zone');
         if (!inBattleZone) {
-             if (typeof confirmWarning === 'function' && !confirmWarning('warnAttackPhase', 'バトルエリア以外からは攻撃できません。攻撃しますか？')) {
-                 return;
+             if (typeof autoConfig !== 'undefined' && autoConfig.warnAttackPhase) {
+                 if (typeof showCustomConfirm === 'function') {
+                     const confirmed = await showCustomConfirm('バトルエリア以外からは攻撃できません。攻撃しますか？');
+                     if (!confirmed) return;
+                 }
              }
         }
 
@@ -975,8 +992,11 @@ function triggerEffect(thumbnailElement, type) {
         const currentTurn = currentTurnInput ? parseInt(currentTurnInput.value) : null;
 
         if (deployedTurn && currentTurn && deployedTurn === currentTurn) {
-            if (typeof confirmWarning === 'function' && !confirmWarning('warnSummoningSickness', 'このカードはこのターンに配置されました（召喚酔い）。攻撃しますか？')) {
-                return;
+            if (typeof autoConfig !== 'undefined' && autoConfig.warnSummoningSickness) {
+                if (typeof showCustomConfirm === 'function') {
+                    const confirmed = await showCustomConfirm('このカードはこのターンに配置されました（召喚酔い）。攻撃しますか？');
+                    if (!confirmed) return;
+                }
             }
         }
     }
@@ -1257,7 +1277,7 @@ function checkBpDestruction(thumbnailElement) {
     }
 }
 
-function exportSingleCard(thumbnailElement) {
+async function exportSingleCard(thumbnailElement) {
     if (!thumbnailElement) return;
 
     const imgElement = thumbnailElement.querySelector('.card-image');
@@ -1285,7 +1305,10 @@ function exportSingleCard(thumbnailElement) {
         fileName = nameMatch[1].trim();
     }
 
-    const userInput = prompt("保存するファイル名を入力してください", fileName);
+    const userInput = typeof showCustomPrompt === 'function' 
+        ? await showCustomPrompt("保存するファイル名を入力してください", fileName)
+        : prompt("保存するファイル名を入力してください", fileName);
+
     if (!userInput) return;
 
     const jsonData = JSON.stringify(cardData, null, 2);

@@ -1,17 +1,3 @@
-// ============================================================================
-// ui-game-logic.js
-// ゲーム進行、タイマー、勝敗表示、トークン初期化ロジック
-// ============================================================================
-
-// ※ turnTimerDuration, timerRemaining, currentTimerId, stepButtons, stepOrder, currentStepIndex, isTurnEnded
-//    などの状態変数は ui-globals.js で定義されています。
-
-// --- Game Result UI Logic ---
-
-/**
- * 勝敗結果を表示する
- * @param {string} message 
- */
 window.showGameResult = function(message) {
     if (!gameResultOverlay || !gameResultMessage) return;
     
@@ -41,21 +27,12 @@ window.showGameResult = function(message) {
     }
 };
 
-/**
- * 勝敗結果表示を閉じる
- */
 function closeGameResult() {
     if (gameResultOverlay) {
         gameResultOverlay.style.display = 'none';
     }
 }
 
-
-// --- Timer Functions ---
-
-/**
- * タイマー表示を更新
- */
 function updateTimerDisplay() {
     if (turnTimerDisplay) {
         turnTimerDisplay.textContent = Math.ceil(timerRemaining);
@@ -67,10 +44,6 @@ function updateTimerDisplay() {
     }
 }
 
-/**
- * ターンタイマーを開始
- * @param {boolean} resume trueなら一時停止からの再開（リセットしない）
- */
 function startTurnTimer(resume = false) {
     stopTurnTimer();
     
@@ -95,15 +68,14 @@ function startTurnTimer(resume = false) {
             if (timerRemaining <= 0) {
                 stopTurnTimer();
                 playSe('自動減少.mp3'); 
-                processAutoTurnProgression(); 
+                if (autoConfig.autoPhaseOnTimeout) {
+                    processAutoTurnProgression(); 
+                }
             }
         }, 1000);
     }
 }
 
-/**
- * ターンタイマーを停止
- */
 function stopTurnTimer() {
     if (currentTimerId) {
         clearInterval(currentTimerId);
@@ -112,9 +84,6 @@ function stopTurnTimer() {
     if(timerPauseBtn) timerPauseBtn.textContent = '▶';
 }
 
-/**
- * ターンタイマーをリセット
- */
 function resetTurnTimer() {
     stopTurnTimer();
     const input = document.getElementById('setting-timer-duration');
@@ -128,12 +97,6 @@ function resetTurnTimer() {
     updateTimerDisplay();
 }
 
-
-// --- Step / Turn Progression Logic ---
-
-/**
- * ステップボタンのUI状態（active/disabled）を更新
- */
 function updateStepUI() {
     stepButtons.forEach((btn, index) => {
         if (!btn) return;
@@ -143,10 +106,6 @@ function updateStepUI() {
     });
 }
 
-/**
- * ターンプレイヤーの表示状態（CSSクラス）を更新
- * 手札の裏側表示切り替えに使用
- */
 function updateTurnPlayerVisuals() {
     const select = document.getElementById('turn-player-select');
     if (!select) return;
@@ -160,9 +119,6 @@ function updateTurnPlayerVisuals() {
     }
 }
 
-/**
- * 時間切れ時などに自動でステップを進める処理
- */
 function processAutoTurnProgression() {
     if (currentStepIndex >= 5 || currentStepIndex < 0) return;
 
@@ -181,9 +137,6 @@ function processAutoTurnProgression() {
     }, 500); 
 }
 
-/**
- * ステップボタンのイベントリスナーを設定
- */
 function setupStepButtons() {
     stepButtons = stepOrder.map(id => document.getElementById(id));
 
@@ -194,8 +147,17 @@ function setupStepButtons() {
                     
                     const turnInput = document.getElementById('common-turn-value');
                     const turnPlayerSelect = document.getElementById('turn-player-select');
+                    let cutinTriggered = false;
+
+                    const triggerCutin = () => {
+                        if (typeof autoConfig !== 'undefined' && autoConfig.msgPhaseCutin && !cutinTriggered) {
+                            const stepLabels = ['ターン開始', 'ドローステップ', 'アンタップステップ', 'メインステップ', 'バトルステップ', 'エンドステップ'];
+                            const label = stepLabels[index] || '';
+                            if(label && typeof showPhaseCutin === 'function') showPhaseCutin(label);
+                            cutinTriggered = true;
+                        }
+                    };
                     
-                    // ①ターン開始
                     if (button.id === 'step-start') {
                         if (typeof manaPlacedThisTurn !== 'undefined') manaPlacedThisTurn = false;
 
@@ -228,7 +190,7 @@ function setupStepButtons() {
                             isTurnEnded = false;
                             updateTurnPlayerVisuals();
                         } else {
-                            console.log("前のターンが終了していないため、ターン数は進めずにフェイズをリセットしました。");
+                            console.log("前のターンが終了していないため、ターン数は進めずにステップをリセットしました。");
                         }
 
                         if (typeof updateSummoningSicknessVisuals === 'function') {
@@ -253,10 +215,10 @@ function setupStepButtons() {
                             const opponentName = document.getElementById('opponent-player-name').value;
                             const currentName = turnPlayerSelect.value === 'first' ? playerName : opponentName;
                             await showCustomAlert(`${currentName}のターンです`);
+                            triggerCutin();
                         }
                     }
                     
-                    // --- UI更新処理 ---
                     if (button.id === 'step-start') {
                         playSe('ターン開始.mp3');
                     } else {
@@ -266,19 +228,10 @@ function setupStepButtons() {
                     currentStepIndex = index;
                     updateStepUI();
 
-                    if (typeof autoConfig !== 'undefined' && autoConfig.msgPhaseCutin) {
-                        const stepLabels = ['ターン開始', 'ドローフェイズ', 'アンタップフェイズ', 'メインフェイズ', 'バトルフェイズ', 'エンドフェイズ'];
-                        const label = stepLabels[index] || '';
-                        if(label && typeof showPhaseCutin === 'function') showPhaseCutin(label);
-                    }
-
                     if (typeof isRecording !== 'undefined' && isRecording && typeof recordAction === 'function') {
                         recordAction({ type: 'stepChange', index: index });
                     }
 
-                    // --- その他のステップロジック ---
-                    
-                    // ②ドロー
                     if (button.id === 'step-draw') {
                         if (autoConfig.autoDrawPhase) {
                             const turnVal = parseInt(turnInput.value) || 1;
@@ -287,6 +240,7 @@ function setupStepButtons() {
                             if (isFirstTurnFirstPlayer) {
                                 if (autoConfig.msgDrawPhase) {
                                     await showCustomAlert('先行1ターン目なので1ドローしません');
+                                    triggerCutin();
                                 }
                             } else {
                                 const prefix = (turnPlayerSelect.value === 'second') ? 'opponent-' : '';
@@ -295,6 +249,7 @@ function setupStepButtons() {
                                 
                                 if (autoConfig.msgDrawPhase) {
                                     await showCustomAlert('1ドローしてください（自動処理設定ONの場合は自動で引かれています）');
+                                    triggerCutin();
                                 }
                             }
                         } else {
@@ -306,14 +261,15 @@ function setupStepButtons() {
                                 } else {
                                     await showCustomAlert('1ドローしてください');
                                 }
+                                triggerCutin();
                             }
                         }
                     }
 
-                    // ③アンタップ
                     else if (button.id === 'step-mana') {
                         if (autoConfig.msgUntapPhase) {
                             await showCustomAlert('カードをアンタップしてください');
+                            triggerCutin();
                         }
                         
                         if (typeof autoConfig !== 'undefined' && autoConfig.autoUntapPhase) {
@@ -353,28 +309,32 @@ function setupStepButtons() {
                         }
                     }
 
-                    // ④メイン
                     else if (button.id === 'step-main') {
                         if (autoConfig.msgMainPhase) {
                             await showCustomAlert('マナエリアに1枚だけ、カードを置く事が出来ます');
+                            triggerCutin();
                         }
                     }
 
-                    // ⑤バトル
                     else if (button.id === 'step-attack') {
                         if (autoConfig.msgBattlePhase) {
                             await showCustomAlert('アタック/バトル可能です');
+                            triggerCutin();
                         }
                     }
 
-                    // ⑥終了
                     else if (button.id === 'step-end') {
                         stopTurnTimer();
                         isTurnEnded = true;
                         
                         if (autoConfig.msgEndPhase) {
                             await showCustomAlert('ターンを終了します');
+                            triggerCutin();
                         }
+                    }
+                    
+                    if (!cutinTriggered) {
+                        triggerCutin();
                     }
                 }
             });
@@ -386,12 +346,6 @@ function setupStepButtons() {
     if(stepButtons[0]) stepButtons[0].disabled = false;
 }
 
-
-// --- Initialization Helpers ---
-
-/**
- * トークンカードの初期配置
- */
 function initializeTokens() {
     const initToken = (zoneId, slotIndex, imgSrc, memo) => {
         const zone = document.getElementById(zoneId);
@@ -422,15 +376,7 @@ function initializeTokens() {
     initToken('opponent-token-zone-slots', 1, './decoration/トークン2.png', token2Memo);
 }
 
-
-// --- Event Listeners Setup ---
-
-/**
- * ゲームコントロール関連のイベントリスナーを設定
- * ui-main.js から呼び出される
- */
 function setupGameControlEvents() {
-    // Game Result Close
     if (gameResultCloseBtn) {
         gameResultCloseBtn.addEventListener('click', () => {
             playSe('ボタン共通.mp3');
@@ -438,7 +384,6 @@ function setupGameControlEvents() {
         });
     }
 
-    // デュエル開始ボタン
     if (duelStartBtn) {
         duelStartBtn.addEventListener('click', async () => {
             const currentTurn = parseInt(document.getElementById('common-turn-value').value) || 1;
@@ -451,7 +396,43 @@ function setupGameControlEvents() {
 
             playSe('ボタン共通.mp3');
 
-            // 1. リセット
+            const playerDeckContainer = document.getElementById('deck-back-slots');
+            const playerDeckCount = playerDeckContainer ? playerDeckContainer.querySelectorAll('.thumbnail').length : 0;
+
+            if (playerDeckCount === 0) {
+                const randomNum = Math.floor(Math.random() * 8) + 1;
+                const sampleFileName = `sample/sample_deck_${randomNum}.json`;
+                
+                try {
+                    const response = await fetch(sampleFileName);
+                    if (response.ok) {
+                        const data = await response.json();
+                        await showCustomAlert(`デッキがありません。\nサンプルデッキ No.${randomNum} を読み込んで開始します。`);
+                        
+                        if (typeof clearZoneData === 'function') {
+                            clearZoneData('deck-back-slots');
+                            clearZoneData('side-deck-back-slots');
+                            clearZoneData('free-space-slots');
+                            clearZoneData('token-zone-slots');
+                        }
+                        
+                        if (typeof applyDataToZone === 'function') {
+                            if (data.deck) applyDataToZone('deck-back-slots', data.deck);
+                            if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
+                            if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
+                            if (data.token) applyDataToZone('token-zone-slots', data.token);
+                        }
+                        
+                        if (typeof syncMainZoneImage === 'function') {
+                            syncMainZoneImage('deck', '');
+                            syncMainZoneImage('side-deck', '');
+                        }
+                    }
+                } catch (e) {
+                    console.warn("サンプルデッキの読み込みに失敗しました:", e);
+                }
+            }
+
             if (autoConfig.autoDuelReset) {
                 if(typeof resetBoard === 'function') {
                     resetBoard('');
@@ -459,7 +440,6 @@ function setupGameControlEvents() {
                 }
             }
 
-            // 2. シャッフル
             if (autoConfig.autoDuelShuffle) {
                 if(typeof shuffleDeck === 'function') {
                     shuffleDeck('');
@@ -467,7 +447,6 @@ function setupGameControlEvents() {
                 }
             }
 
-            // 3. 5枚ドロー
             if (autoConfig.autoDuelDraw) {
                 for(let i=0; i<5; i++) {
                     if(typeof drawCardFromDeck === 'function') {
@@ -477,7 +456,6 @@ function setupGameControlEvents() {
                 }
             }
 
-            // 4. 先行後攻ランダム
             const isFirst = Math.random() < 0.5;
             const turnSelect = document.getElementById('turn-player-select');
             
@@ -485,22 +463,18 @@ function setupGameControlEvents() {
             const optSecond = turnSelect.querySelector('option[value="second"]');
             
             if (isFirst) {
-                // 自分が先行
                 if (optFirst) optFirst.textContent = '先行';
                 if (optSecond) optSecond.textContent = '後攻';
                 turnSelect.value = 'first';
             } else {
-                // 相手が先行
                 if (optFirst) optFirst.textContent = '後攻';
                 if (optSecond) optSecond.textContent = '先行';
                 turnSelect.value = 'second';
             }
 
-            // 5. ターン数リセット
             const turnInput = document.getElementById('common-turn-value');
             turnInput.value = 1;
 
-            // 6. ステップリセット & ターン終了フラグ初期化
             currentStepIndex = -1;
             updateStepUI();
             isTurnEnded = true; 
@@ -513,33 +487,30 @@ function setupGameControlEvents() {
             
             if (typeof manaPlacedThisTurn !== 'undefined') manaPlacedThisTurn = false;
 
-            // 7. 盤面自動反転
             if (autoConfig.autoBoardFlip) {
                 const body = document.body;
-                if (!isFirst) { // 相手が先行（自分が後攻）
+                if (!isFirst) { 
                     if (!body.classList.contains('board-flipped')) {
                         document.getElementById('common-flip-board-btn')?.click();
                     }
-                } else { // 自分が先行
+                } else { 
                     if (body.classList.contains('board-flipped')) {
                         document.getElementById('common-flip-board-btn')?.click();
                     }
                 }
             }
 
-            // 8. 開始メッセージ & SE
             const playerName = document.getElementById('player-name').value;
             const opponentName = document.getElementById('opponent-player-name').value;
             const firstPlayerName = isFirst ? playerName : opponentName;
             
             await showCustomAlert(`デュエル開始！\n先行は「${firstPlayerName}」です。`);
-            playSe('Theme.mp3'); 
+            playSe('デュエル開始.mp3'); 
             
             resetTurnTimer();
         });
     }
 
-    // ターン操作パネル
     const turnInput = document.getElementById('common-turn-value');
     const turnPrevBtn = document.getElementById('common-turn-prev');
     const turnNextBtn = document.getElementById('common-turn-next');
@@ -562,14 +533,13 @@ function setupGameControlEvents() {
     const turnPlayerSelect = document.getElementById('turn-player-select');
     if (turnPlayerSelect) {
         turnPlayerSelect.addEventListener('change', () => {
-             updateTurnPlayerVisuals(); // 手動変更時も反映
+             updateTurnPlayerVisuals(); 
              if (typeof isRecording !== 'undefined' && isRecording && typeof recordAction === 'function') {
                 recordAction({ type: 'turnPlayerChange', value: turnPlayerSelect.value });
             }
         });
     }
 
-    // タイマー設定入力の監視
     const timerInput = document.getElementById('setting-timer-duration');
     if (timerInput) {
         timerInput.value = turnTimerDuration;
@@ -580,9 +550,9 @@ function setupGameControlEvents() {
                 resetTurnTimer();
             }
         });
+        resetTurnTimer(); 
     }
 
-    // タイマー一時停止ボタン
     if (timerPauseBtn) {
         timerPauseBtn.addEventListener('click', () => {
             playSe('ボタン共通.mp3');
@@ -594,12 +564,60 @@ function setupGameControlEvents() {
         });
     }
 
-    // 初期表示設定
     updateTurnPlayerVisuals();
 
-    // トークン初期化
     initializeTokens();
 
-    // ステップボタン初期化
     setupStepButtons();
+
+    startStatusAnimationLoop();
+}
+
+function startStatusAnimationLoop() {
+    setTimeout(() => {
+        setInterval(() => {
+            triggerStatusAnimation('');
+            triggerStatusAnimation('opponent-');
+        }, 4000); 
+    }, 2000);
+}
+
+function triggerStatusAnimation(idPrefix) {
+    const wrapperClass = idPrefix ? '.opponent-wrapper' : '.player-wrapper';
+    const wrapper = document.querySelector(wrapperClass);
+    if (!wrapper) return;
+
+    const inputs = Array.from(wrapper.querySelectorAll('.extra-text'));
+    const validTexts = inputs.map(input => input.value.trim()).filter(text => text !== '');
+
+    if (validTexts.length === 0) return;
+
+    const shuffled = validTexts.sort(() => 0.5 - Math.random());
+
+    const iconZoneId = idPrefix + 'icon-zone';
+    const iconZone = document.getElementById(iconZoneId);
+    const targetEl = iconZone ? iconZone.closest('.player-icon-slot') : null;
+
+    if (!targetEl) return;
+
+    shuffled.forEach((text, index) => {
+        setTimeout(() => {
+            const floatingEl = document.createElement('div');
+            floatingEl.textContent = text;
+            floatingEl.className = 'status-floating-pink'; 
+            
+            const randomTop = Math.random() * 100;
+            const randomLeft = Math.random() * 100;
+            
+            floatingEl.style.top = `${randomTop}%`;
+            floatingEl.style.left = `${randomLeft}%`;
+            floatingEl.style.transform = 'translate(-50%, -50%)'; 
+
+            targetEl.appendChild(floatingEl);
+
+            floatingEl.addEventListener('animationend', () => {
+                floatingEl.remove();
+            });
+        }, index * 800); 
+    });
 }

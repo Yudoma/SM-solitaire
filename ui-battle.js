@@ -1,29 +1,13 @@
-// ============================================================================
-// ui-battle.js
-// バトル処理、攻撃対象選択、バトル確認モーダルの制御
-// ============================================================================
-
-// ※ isBattleTargetMode, isBattleConfirmMode, currentAttacker, currentBattleTarget 
-//    などの状態変数は ui-globals.js で定義されています。
-
-// --- Battle Confirm Modal Logic ---
-
-/**
- * バトル確認モーダルを開く
- * @param {HTMLElement} attacker 攻撃側カード要素
- * @param {HTMLElement} target 対象カード要素
- */
-window.openBattleConfirmModal = function(attacker, target) {
+window.openBattleConfirmModal = async function(attackers, target) {
     if (!battleConfirmModal) return;
     
-    // --- フレンドリーファイア警告 ---
+    if (!Array.isArray(attackers)) {
+        attackers = [attackers];
+    }
+
     if (typeof autoConfig !== 'undefined' && autoConfig.warnFriendlyFire) {
-        // 攻撃側のオーナー特定
-        // getParentZoneId は zone.js 等で定義される想定
-        const attackerZone = typeof getParentZoneId === 'function' ? getParentZoneId(attacker.parentNode) : '';
-        const attackerIsOpponent = attackerZone && attackerZone.startsWith('opponent-');
+        let isFriendlyFire = false;
         
-        // 対象のオーナー特定
         let targetIsOpponent = false;
         if (target.id === 'opponent-icon-zone' || (target.id && target.id.startsWith('opponent-'))) {
             targetIsOpponent = true;
@@ -33,18 +17,27 @@ window.openBattleConfirmModal = function(attacker, target) {
                 targetIsOpponent = true;
             }
         }
+
+        for (const attacker of attackers) {
+            const attackerZone = typeof getParentZoneId === 'function' ? getParentZoneId(attacker.parentNode) : '';
+            const attackerIsOpponent = attackerZone && attackerZone.startsWith('opponent-');
+            
+            if (attackerIsOpponent === targetIsOpponent) {
+                isFriendlyFire = true;
+                break;
+            }
+        }
         
-        // 同じサイドなら警告
-        if (attackerIsOpponent === targetIsOpponent) {
-            // confirmWarning は ui-utils.js 等で定義される想定
-            if (typeof confirmWarning === 'function' && !confirmWarning('warnFriendlyFire', '自分のカードを対象として選択しています。よろしいですか？')) {
-                // キャンセルの場合、ターゲット選択モードを終了して戻る
-                if(typeof cancelBattleTargetSelection === 'function') cancelBattleTargetSelection();
-                return;
+        if (isFriendlyFire) {
+            if (typeof confirmWarning === 'function') {
+                const confirmed = await confirmWarning('warnFriendlyFire', '自分のカードを選択していますが。よろしいですか？');
+                if (!confirmed) {
+                    if(typeof cancelBattleTargetSelection === 'function') cancelBattleTargetSelection();
+                    return;
+                }
             }
         }
     }
-    // ----------------------------
     
     document.body.classList.remove('battle-target-mode');
     if (battleTargetOverlay) battleTargetOverlay.style.display = 'none';
@@ -52,40 +45,129 @@ window.openBattleConfirmModal = function(attacker, target) {
     const candidates = document.querySelectorAll('.battle-target-candidate');
     candidates.forEach(el => el.classList.remove('battle-target-candidate'));
 
-    const attackerImg = attacker.querySelector('.card-image');
-    if (attackerImg && battleConfirmAttackerImg) {
-        battleConfirmAttackerImg.style.backgroundImage = `url(${attackerImg.src})`;
+    if (battleConfirmAttackerImg) {
+        battleConfirmAttackerImg.innerHTML = '';
+        battleConfirmAttackerImg.style.backgroundImage = 'none';
+        
+        battleConfirmAttackerImg.style.display = 'flex';
+        battleConfirmAttackerImg.style.flexWrap = 'nowrap';
+        battleConfirmAttackerImg.style.overflowX = 'auto';
+        battleConfirmAttackerImg.style.justifyContent = 'center'; 
+        battleConfirmAttackerImg.style.gap = '10px';
+        battleConfirmAttackerImg.style.alignItems = 'center';
+        battleConfirmAttackerImg.style.padding = '10px';
+
+        const getBP = (element) => {
+            if (!element) return 0;
+            const memo = element.dataset.memo || '';
+            const match = memo.match(/\[BP:(.*?)\]/i);
+            if (match && match[1]) {
+                const bpValue = match[1].trim();
+                if (bpValue === '-' || bpValue === '') return 0;
+                const parsedBp = parseInt(bpValue);
+                return isNaN(parsedBp) ? 0 : parsedBp;
+            }
+            return 0;
+        };
+
+        attackers.forEach(attacker => {
+            const imgElement = attacker.querySelector('.card-image');
+            if (imgElement) {
+                const container = document.createElement('div');
+                container.className = 'battle-attacker-item';
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+                container.style.flexShrink = '0';
+                container.style.width = '110px'; 
+
+                const thumb = document.createElement('div');
+                thumb.style.width = '100px'; 
+                thumb.style.height = '140px'; 
+                thumb.style.backgroundSize = 'contain';
+                thumb.style.backgroundRepeat = 'no-repeat';
+                thumb.style.backgroundPosition = 'center';
+                thumb.style.backgroundImage = `url(${imgElement.src})`;
+                thumb.style.border = '0px solid #555';
+                thumb.style.marginBottom = '5px';
+                thumb.style.backgroundColor = '#ffffff';
+                thumb.style.borderRadius = '3px';
+
+                const bpInput = document.createElement('input');
+                bpInput.type = 'number';
+                bpInput.className = 'attacker-individual-bp';
+                bpInput.value = getBP(attacker);
+                bpInput.style.width = '80px';
+                bpInput.style.fontSize = '0.9em';
+                bpInput.style.textAlign = 'center';
+                bpInput.style.backgroundColor = '#222';
+                bpInput.style.color = '#fff';
+                bpInput.style.border = '1px solid #444';
+                bpInput.style.borderRadius = '3px';
+                
+                bpInput.addEventListener('input', calculateTotalAttackerBP);
+
+                container.appendChild(thumb);
+                container.appendChild(bpInput);
+                battleConfirmAttackerImg.appendChild(container);
+            }
+        });
+    }
+    
+    if (battleConfirmAttackerBpInput) {
+        const label = battleConfirmAttackerBpInput.previousElementSibling;
+        if (label && label.tagName === 'SPAN') {
+            label.textContent = 'Total BP:';
+        }
     }
     
     if (battleConfirmTargetImg) {
         battleConfirmTargetImg.style.backgroundImage = 'none'; 
+        battleConfirmTargetImg.innerHTML = '';
+        
+        let targetImgSrc = null;
+
         if (target.id === 'icon-zone' || target.id === 'opponent-icon-zone') {
-            const iconImg = target.closest('.player-icon-slot')?.querySelector('.thumbnail .card-image');
-            if (iconImg) {
-                battleConfirmTargetImg.style.backgroundImage = `url(${iconImg.src})`;
-            } else {
-                battleConfirmTargetImg.innerHTML = '<span style="color:#ccc; font-size:0.8em; display: flex; justify-content: center; align-items: center; height: 100%;">Player</span>';
+            const iconSlot = target.closest('.player-icon-slot'); 
+            if (iconSlot) {
+                const thumbnail = iconSlot.querySelector('.thumbnail');
+                if (thumbnail) {
+                    const img = thumbnail.querySelector('.card-image');
+                    if (img) targetImgSrc = img.src;
+                }
             }
-        } else {
+        } 
+        else {
             const targetThumb = target.querySelector('.thumbnail');
             const targetImg = targetThumb ? targetThumb.querySelector('.card-image') : null;
-            if (targetImg) {
-                battleConfirmTargetImg.style.backgroundImage = `url(${targetImg.src})`;
-            }
+            if (targetImg) targetImgSrc = targetImg.src;
+        }
+
+        if (targetImgSrc) {
+            battleConfirmTargetImg.style.backgroundImage = `url(${targetImgSrc})`;
+        } else {
+            battleConfirmTargetImg.innerHTML = '<span style="color:#ccc; font-size:0.8em; display: flex; justify-content: center; align-items: center; height: 100%;">No Image</span>';
         }
     }
 
     battleConfirmModal.style.display = 'flex';
     isBattleConfirmMode = true;
-    currentAttacker = attacker;
+    currentAttackers = attackers;
     currentBattleTarget = target;
 
     window.updateBattleConfirmModal();
 };
 
-/**
- * バトル確認モーダルの内容（BPなど）を更新する
- */
+window.calculateTotalAttackerBP = function() {
+    if (!battleConfirmAttackerImg || !battleConfirmAttackerBpInput) return;
+    const inputs = battleConfirmAttackerImg.querySelectorAll('.attacker-individual-bp');
+    let total = 0;
+    inputs.forEach(input => {
+        total += (parseInt(input.value) || 0);
+    });
+    battleConfirmAttackerBpInput.value = total;
+};
+
 window.updateBattleConfirmModal = function() {
     if (!battleConfirmModal || battleConfirmModal.style.display === 'none') return;
     
@@ -104,62 +186,92 @@ window.updateBattleConfirmModal = function() {
         return '0';
     };
 
-    if (currentAttacker && battleConfirmAttackerBpInput) {
-        battleConfirmAttackerBpInput.value = getBP(currentAttacker);
+    if (currentAttackers && currentAttackers.length > 0) {
+        const inputs = battleConfirmAttackerImg.querySelectorAll('.attacker-individual-bp');
+        currentAttackers.forEach((attacker, index) => {
+            if (inputs[index]) {
+                const latestBpStr = getBP(attacker);
+                inputs[index].value = (latestBpStr === '-') ? 0 : parseInt(latestBpStr);
+            }
+        });
+    }
+
+    if (typeof calculateTotalAttackerBP === 'function') {
+        calculateTotalAttackerBP();
     }
 
     if (currentBattleTarget && battleConfirmTargetBpInput) {
         let targetEl = currentBattleTarget;
         if (targetEl.id !== 'icon-zone' && targetEl.id !== 'opponent-icon-zone') {
             targetEl = targetEl.querySelector('.thumbnail') || targetEl;
+        } else {
+             const iconSlot = targetEl.closest('.player-icon-slot');
+             if (iconSlot) {
+                 const thumb = iconSlot.querySelector('.thumbnail');
+                 if (thumb) targetEl = thumb;
+             }
         }
         battleConfirmTargetBpInput.value = getBP(targetEl);
     }
 };
 
-/**
- * バトル確認モーダルを閉じる
- */
 window.closeBattleConfirmModal = function() {
     if (battleConfirmModal) {
         battleConfirmModal.style.display = 'none';
+        
+        if (battleConfirmAttackerImg) {
+            battleConfirmAttackerImg.innerHTML = '';
+            battleConfirmAttackerImg.style.backgroundImage = '';
+            battleConfirmAttackerImg.style.display = '';
+        }
+        
+        if (battleConfirmAttackerBpInput) {
+            const label = battleConfirmAttackerBpInput.previousElementSibling;
+            if (label && label.tagName === 'SPAN') {
+                label.textContent = 'BP:'; 
+            }
+        }
     }
     isBattleConfirmMode = false;
     currentBattleTarget = null;
-    if (currentAttacker) {
-        currentAttacker.classList.remove('battle-attacker');
+    
+    if (currentAttackers && Array.isArray(currentAttackers)) {
+        currentAttackers.forEach(attacker => {
+            attacker.classList.remove('battle-attacker');
+        });
     }
+    currentAttackers = [];
 };
 
-
-// --- Battle Target Selection Logic ---
-
-/**
- * 攻撃対象選択モードを開始する
- * @param {HTMLElement} attackerThumbnail 攻撃側のカード要素
- */
-function startBattleTargetSelection(attackerThumbnail) {
-    if (!attackerThumbnail) return;
+function startBattleTargetSelection(attackers) {
+    if (!attackers) return;
+    
+    if (!Array.isArray(attackers)) {
+        attackers = [attackers];
+    }
     
     isBattleTargetMode = true;
-    currentAttacker = attackerThumbnail;
+    currentAttackers = attackers;
+    
     document.body.classList.add('battle-target-mode');
     if (battleTargetOverlay) battleTargetOverlay.style.display = 'flex';
-    attackerThumbnail.classList.add('battle-attacker');
+    
+    attackers.forEach(attacker => {
+        attacker.classList.add('battle-attacker');
+    });
 
-    // ターゲット候補のハイライト
     const allThumbnails = document.querySelectorAll('.card-slot .thumbnail');
     allThumbnails.forEach(thumb => {
+        if (attackers.includes(thumb)) return;
+
         const zone = getParentZoneId(thumb.parentNode);
         const base = getBaseId(zone);
         
-        // 攻撃対象にならないゾーンを除外
         if (['deck', 'grave', 'exclude', 'side-deck', 'hand-zone', 'token-zone-slots', 'c-free-space'].includes(base)) return;
         
         thumb.classList.add('battle-target-candidate');
     });
 
-    // プレイヤーアイコンも候補に追加
     const iconZone = document.getElementById('icon-zone');
     const oppIconZone = document.getElementById('opponent-icon-zone');
     
@@ -173,34 +285,25 @@ function startBattleTargetSelection(attackerThumbnail) {
     }
 }
 
-/**
- * 攻撃対象選択モードをキャンセルする
- */
 window.cancelBattleTargetSelection = function() {
     isBattleTargetMode = false;
     document.body.classList.remove('battle-target-mode');
     if (battleTargetOverlay) battleTargetOverlay.style.display = 'none';
-    if (currentAttacker) {
-        currentAttacker.classList.remove('battle-attacker');
-        currentAttacker = null;
+    
+    if (currentAttackers && Array.isArray(currentAttackers)) {
+        currentAttackers.forEach(attacker => {
+            attacker.classList.remove('battle-attacker');
+        });
     }
+    currentAttackers = [];
 
     const candidates = document.querySelectorAll('.battle-target-candidate');
     candidates.forEach(el => el.classList.remove('battle-target-candidate'));
 };
 
-
-// --- Initialization ---
-
-/**
- * バトル関連のイベントリスナーを設定
- * ui-main.js から呼び出される
- */
 function setupBattleEvents() {
-    // バトル確認モーダル用
     if (battleConfirmExecuteBtn) {
         battleConfirmExecuteBtn.addEventListener('click', () => {
-            // resolveBattle は main.js 等で定義される想定
             if (typeof resolveBattle === 'function') {
                 const aBp = parseInt(battleConfirmAttackerBpInput.value);
                 const tBp = parseInt(battleConfirmTargetBpInput.value);
@@ -215,12 +318,10 @@ function setupBattleEvents() {
         });
     }
 
-    // モーダルドラッグ機能の有効化 (headerがあれば)
     if (typeof makeDraggable === 'function') {
         if (battleConfirmHeader && battleConfirmModal) makeDraggable(battleConfirmHeader, battleConfirmModal);
     }
     
-    // バトルターゲット選択キャンセルボタン
     if (battleCancelBtn) {
         battleCancelBtn.addEventListener('click', () => {
             if (typeof cancelBattleTargetSelection === 'function') cancelBattleTargetSelection();

@@ -48,22 +48,22 @@ body {
 }
 
 #player-drawer {
-    top: 10px;
+    top: 1px;
     max-height: 45vh;
 }
 
 #opponent-drawer {
-    bottom: 10px;
+    bottom: 1px;
     max-height: 45vh;
 }
 
 body.board-flipped #player-drawer {
     top: auto;
-    bottom: 10px;
+    bottom: 1px;
 }
 body.board-flipped #opponent-drawer {
     bottom: auto;
-    top: 10px;
+    top: 1px;
 }
 
 #c-drawer {
@@ -73,6 +73,7 @@ body.board-flipped #opponent-drawer {
     background-color: #1e3a2e; 
     border-color: #4a8a6a;
     color: #e0f0e8;
+    height: 44.5vh;
 }
 
 #c-drawer.open {
@@ -719,4 +720,36 @@ body.board-flipped #opponent-drawer-toggle:active {
     opacity: 1;
     transform: scale(1.1);
     background-color: #ff0000;
+}
+
+.extra-text:focus, .extra-header-input:focus {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: #888;
+    color: #fff;
+    outline: none;
+}
+
+.extra-text::placeholder {
+    color: #555;
+    font-size: 0.8em;
+}
+
+#player-counter-wrapper {
+    flex-grow: 1;
+    align-items: stretch;
+}
+
+#player-counter-wrapper .hand-counter-group {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+#opponent-counter-wrapper {
+    flex-grow: 1;
+    align-items: stretch;
+}
+
+#opponent-counter-wrapper .hand-counter-group {
+    flex-grow: 1;
+    justify-content: center;
 }

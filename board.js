@@ -1,8 +1,10 @@
 window.resolveBattle = function(attackerBP, targetBP) {
-    if (!currentAttacker || !currentBattleTarget) {
+    if (!currentAttackers || currentAttackers.length === 0 || !currentBattleTarget) {
         if(typeof closeBattleConfirmModal === 'function') closeBattleConfirmModal();
         return;
     }
+
+    const attackersToProcess = [...currentAttackers];
 
     if (typeof saveStateForUndo === 'function') saveStateForUndo();
 
@@ -13,7 +15,7 @@ window.resolveBattle = function(attackerBP, targetBP) {
         return ['hand-zone', 'side-deck', 'side-deck-back-slots', 'grave', 'grave-back-slots', 'exclude', 'exclude-back-slots', 'deck', 'deck-back-slots', 'token-zone-slots', 'c-free-space'].includes(baseId);
     };
 
-    if (isInvalidZone(currentAttacker) || isInvalidZone(currentBattleTarget)) {
+    if (attackersToProcess.some(att => isInvalidZone(att)) || isInvalidZone(currentBattleTarget)) {
         if(typeof closeBattleConfirmModal === 'function') closeBattleConfirmModal();
         return;
     }
@@ -42,10 +44,13 @@ window.resolveBattle = function(attackerBP, targetBP) {
     };
 
     playSe('アタック.mp3');
-    currentAttacker.classList.add('attack-active');
-    setTimeout(() => {
-        currentAttacker.classList.remove('attack-active');
-    }, 1000);
+    
+    attackersToProcess.forEach(attacker => {
+        attacker.classList.add('attack-active');
+        setTimeout(() => {
+            attacker.classList.remove('attack-active');
+        }, 1000);
+    });
 
     if (isPlayerIcon) {
         playHitEffect(currentBattleTarget);
@@ -53,7 +58,7 @@ window.resolveBattle = function(attackerBP, targetBP) {
         triggerEffect(targetThumbnail, 'target');
     }
 
-    let attackerDestructed = false;
+    let attackersDestructed = false;
 
     if (isPlayerIcon) {
         if (typeof autoConfig !== 'undefined' && autoConfig.autoBattleCalc && !isNaN(attackerBP)) {
@@ -94,17 +99,21 @@ window.resolveBattle = function(attackerBP, targetBP) {
                     if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(targetThumbnail, 'grave');
                 });
             } else if (attackerBP < targetBP) {
-                attackerDestructed = true;
-                playDestructEffect(currentAttacker, () => {
-                    if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(currentAttacker, 'grave');
+                attackersDestructed = true;
+                attackersToProcess.forEach(attacker => {
+                    playDestructEffect(attacker, () => {
+                        if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(attacker, 'grave');
+                    });
                 });
             } else {
-                attackerDestructed = true;
+                attackersDestructed = true;
                 playDestructEffect(targetThumbnail, () => {
                     if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(targetThumbnail, 'grave');
                 });
-                playDestructEffect(currentAttacker, () => {
-                    if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(currentAttacker, 'grave');
+                attackersToProcess.forEach(attacker => {
+                    playDestructEffect(attacker, () => {
+                        if (typeof moveCardToMultiZone === 'function') moveCardToMultiZone(attacker, 'grave');
+                    });
                 });
             }
         } else {
@@ -113,34 +122,41 @@ window.resolveBattle = function(attackerBP, targetBP) {
     }
 
     if (typeof autoConfig !== 'undefined' && autoConfig.autoAttackTap) {
-        if (!attackerDestructed) {
+        if (!attackersDestructed) {
             setTimeout(() => {
-                if (document.body.contains(currentAttacker) && !isInvalidZone(currentAttacker)) {
-                    const imgElement = currentAttacker.querySelector('.card-image');
-                    const slotElement = currentAttacker.parentNode;
-                    if (imgElement && slotElement) {
-                        const currentRotation = parseInt(imgElement.dataset.rotation) || 0;
-                        if (currentRotation === 0) {
-                            const newRotation = 90;
-                            slotElement.classList.add('rotated-90');
-                            const { width, height } = getCardDimensions();
-                            const scaleFactor = height / width;
-                            imgElement.style.transform = `rotate(${newRotation}deg) scale(${scaleFactor})`;
-                            imgElement.dataset.rotation = newRotation;
-                            playSe('タップ.mp3');
-                            
-                            if (typeof recordAction === 'function') {
-                                recordAction({
-                                    type: 'rotate',
-                                    zoneId: getParentZoneId(slotElement),
-                                    slotIndex: Array.from(slotElement.parentNode.children).indexOf(slotElement),
-                                    rotation: newRotation
-                                });
+                let anyTapped = false;
+                attackersToProcess.forEach(attacker => {
+                    if (document.body.contains(attacker) && !isInvalidZone(attacker)) {
+                        const imgElement = attacker.querySelector('.card-image');
+                        const slotElement = attacker.parentNode;
+                        if (imgElement && slotElement) {
+                            const currentRotation = parseInt(imgElement.dataset.rotation) || 0;
+                            if (currentRotation === 0) {
+                                const newRotation = 90;
+                                slotElement.classList.add('rotated-90');
+                                const { width, height } = getCardDimensions();
+                                const scaleFactor = height / width;
+                                imgElement.style.transform = `rotate(${newRotation}deg) scale(${scaleFactor})`;
+                                imgElement.dataset.rotation = newRotation;
+                                
+                                anyTapped = true;
+                                
+                                if (typeof recordAction === 'function') {
+                                    recordAction({
+                                        type: 'rotate',
+                                        zoneId: getParentZoneId(slotElement),
+                                        slotIndex: Array.from(slotElement.parentNode.children).indexOf(slotElement),
+                                        rotation: newRotation
+                                    });
+                                }
                             }
                         }
                     }
+                });
+                if (anyTapped) {
+                    playSe('タップ.mp3');
                 }
-            }, 900); 
+            }, 1200); 
         }
     }
 
@@ -580,6 +596,7 @@ function exportDeck(idPrefix, fileName = 'deck') {
                 exclude: extractZoneData(idPrefix + 'exclude', true),
                 icon: extractZoneData(idPrefix + 'icon-zone', true),
             },
+            customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {} 
         };
         const jsonData = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
@@ -616,11 +633,18 @@ function importDeck(idPrefix) {
                 
                 applyDataToZone(idPrefix + 'deck-back-slots', importData.deck);
                 applyDataToZone(idPrefix + 'side-deck-back-slots', importData.sideDeck);
-                applyDataToZone(idPrefix + 'free-space-slots', importData.freeSpace);
-                applyDataToZone(idPrefix + 'token-zone-slots', importData.token);
+                if (importData.freeSpace) applyDataToZone(idPrefix + 'free-space-slots', importData.freeSpace);
+                if (importData.token) applyDataToZone(idPrefix + 'token-zone-slots', importData.token);
                 Object.keys(importData.decorations || {}).forEach(zone => {
                     if (importData.decorations[zone]) applyDataToZone(idPrefix + zone, [importData.decorations[zone]]);
                 });
+                
+                if (importData.customIcons && typeof customIconStocks !== 'undefined') {
+                    const targetKey = idPrefix ? 'opponent' : 'player';
+                    if (importData.customIcons[targetKey]) {
+                        customIconStocks[targetKey] = importData.customIcons[targetKey];
+                    }
+                }
                 
                 ['deck', 'side-deck', 'grave', 'exclude'].forEach(zone => syncMainZoneImage(zone, idPrefix));
 
@@ -722,6 +746,7 @@ function getAllBoardState() {
             isTurnEnded: (typeof isTurnEnded !== 'undefined') ? isTurnEnded : true, 
             cNavi: extractZoneData('c-free-space'),
             customCounterTypes: customCounterTypes || [], 
+            customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {}, 
             settings: {
                 bgmVolume: typeof bgmVolume !== 'undefined' ? bgmVolume : 5,
                 seVolume: typeof seVolume !== 'undefined' ? seVolume : 5,
@@ -810,6 +835,10 @@ function restoreAllBoardState(state) {
         
         if (state.common.customCounterTypes) {
             customCounterTypes = state.common.customCounterTypes;
+        }
+        
+        if (state.common.customIcons && typeof customIconStocks !== 'undefined') {
+            customIconStocks = state.common.customIcons;
         }
         
         if (state.common.settings) {
@@ -951,32 +980,53 @@ window.updatePlaymatState = function() {
         
         return {
             src: img.src,
-            timestamp: parseInt(thumbnail.dataset.timestamp) || 0
+            timestamp: parseInt(thumbnail.dataset.timestamp) || 0,
+            rotation: parseInt(img.dataset.rotation) || 0
         };
     };
 
     const opponentInfo = getPlaymatImageInfo('opponent-extra-image-zone');
     const playerInfo = getPlaymatImageInfo('extra-image-zone');
 
-    let targetSrc = null;
+    let targetInfo = null;
 
     if (opponentInfo && playerInfo) {
         if (playerInfo.timestamp > opponentInfo.timestamp) {
-            targetSrc = playerInfo.src;
+            targetInfo = playerInfo;
         } else {
-            targetSrc = opponentInfo.src;
+            targetInfo = opponentInfo;
         }
     } else if (opponentInfo) {
-        targetSrc = opponentInfo.src;
+        targetInfo = opponentInfo;
     } else if (playerInfo) {
-        targetSrc = playerInfo.src;
+        targetInfo = playerInfo;
     }
 
-    if (targetSrc) {
-        playmatBackground.style.backgroundImage = `url("${targetSrc}")`;
+    if (targetInfo) {
+        playmatBackground.style.backgroundImage = `url("${targetInfo.src}")`;
+        
+        if (Math.abs(targetInfo.rotation) % 180 !== 0) {
+            playmatBackground.style.width = '100vh';
+            playmatBackground.style.height = '100vw';
+            playmatBackground.style.top = '50%';
+            playmatBackground.style.left = '50%';
+            playmatBackground.style.transform = `translate(-50%, -50%) rotate(${targetInfo.rotation}deg)`;
+        } else {
+            playmatBackground.style.width = '100vw';
+            playmatBackground.style.height = '100vh';
+            playmatBackground.style.top = '0';
+            playmatBackground.style.left = '0';
+            playmatBackground.style.transform = '';
+        }
+
         document.body.classList.add('playmat-active');
     } else {
         playmatBackground.style.backgroundImage = '';
+        playmatBackground.style.transform = '';
+        playmatBackground.style.width = '';
+        playmatBackground.style.height = '';
+        playmatBackground.style.top = '';
+        playmatBackground.style.left = '';
         document.body.classList.remove('playmat-active');
     }
 };
@@ -1039,4 +1089,29 @@ window.executeBattle = function(attackerThumbnail, targetSlot) {
     if (typeof openBattleConfirmModal === 'function') {
         openBattleConfirmModal(attackerThumbnail, targetSlot);
     }
+};
+
+window.updateSummoningSicknessVisuals = function() {
+    const currentTurnInput = document.getElementById('common-turn-value');
+    const currentTurn = currentTurnInput ? parseInt(currentTurnInput.value) : 1;
+    
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach(thumb => {
+        if (thumb.dataset.isDecoration === 'true') return;
+
+        const slot = thumb.parentNode;
+        const zoneId = getParentZoneId(slot); 
+        const baseZoneId = getBaseId(zoneId); 
+
+        if (baseZoneId === 'battle') {
+            const deployedTurn = parseInt(thumb.dataset.deployedTurn);
+            if (deployedTurn && deployedTurn === currentTurn) {
+                thumb.classList.add('summoning-sickness');
+            } else {
+                thumb.classList.remove('summoning-sickness');
+            }
+        } else {
+            thumb.classList.remove('summoning-sickness');
+        }
+    });
 };

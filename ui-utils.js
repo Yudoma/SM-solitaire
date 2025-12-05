@@ -575,6 +575,7 @@ async function loadTextContent(filePath, elementId) {
 function setupCounters(idPrefix) {
     const lpCounter = document.getElementById(idPrefix + 'counter-value');
     const manaCounter = document.getElementById(idPrefix + 'mana-counter-value');
+    const hyphenCounter = document.getElementById(idPrefix + 'hyphen-counter-value');
     
     const attachAutoDecreaseLogic = (btnId, counter, intervalInputId) => {
         const btns = document.querySelectorAll(`[id="${btnId}"]`);
@@ -622,17 +623,38 @@ function setupCounters(idPrefix) {
                     }
 
                     currentBtn._decreaseTimerId = setInterval(() => {
-                        const currentVal = parseInt(counter.value) || 0;
+                        let currentVal = 0;
+                        let isInput = counter.tagName === 'INPUT';
+                        
+                        if (isInput) {
+                            currentVal = parseInt(counter.value) || 0;
+                        } else {
+                            currentVal = parseInt(counter.textContent) || 0;
+                        }
+                        
                         const newVal = Math.max(0, currentVal - 1);
                         
                         if (currentVal !== newVal) {
-                            counter.value = newVal;
+                            if (isInput) {
+                                counter.value = newVal;
+                            } else {
+                                counter.textContent = newVal;
+                            }
                             
                             let targetIcon = null;
                             let labelText = '';
                             let type = 'default';
                             
-                            if (counter.id.includes('lp') || (counter.id.includes('counter-value') && !counter.id.includes('mana'))) {
+                            if (counter.id.includes('hyphen')) {
+                                const group = counter.closest('.hand-counter-group');
+                                const headerInput = group ? group.querySelector('.header-input') : null;
+                                labelText = headerInput ? headerInput.value : 'Status';
+                                type = 'Hyphen';
+                                const isOpp = idPrefix === 'opponent-';
+                                const iconId = isOpp ? 'opponent-icon-zone' : 'icon-zone';
+                                targetIcon = document.getElementById(iconId);
+                            }
+                            else if (counter.id.includes('lp') || (counter.id.includes('counter-value') && !counter.id.includes('mana'))) {
                                 labelText = 'LP';
                                 type = 'LP';
                                 const isOpp = idPrefix === 'opponent-';
@@ -677,6 +699,7 @@ function setupCounters(idPrefix) {
     const intervalId = idPrefix ? 'opponent-auto-decrease-interval' : 'player-auto-decrease-interval';
     attachAutoDecreaseLogic(idPrefix + 'lp-auto-decrease-btn', lpCounter, intervalId);
     attachAutoDecreaseLogic(idPrefix + 'mana-auto-decrease-btn', manaCounter, intervalId);
+    attachAutoDecreaseLogic(idPrefix + 'hyphen-auto-decrease-btn', hyphenCounter, intervalId);
 
     const counterWrapperId = idPrefix ? idPrefix + 'counter-wrapper' : 'player-counter-wrapper';
     const counterWrapper = document.getElementById(counterWrapperId);
@@ -721,12 +744,12 @@ function setupCounters(idPrefix) {
                 else labelText = areaLabel.textContent; 
             }
 
-            if (targetCounter.id.includes('lp') || (targetCounter.id.includes('counter-value') && !targetCounter.id.includes('mana'))) {
+            if (targetCounter.classList.contains('hyphen-counter-input')) {
+                type = 'Hyphen';
+            } else if (targetCounter.id.includes('lp') || (targetCounter.id.includes('counter-value') && !targetCounter.id.includes('mana'))) {
                 type = 'LP';
             } else if (targetCounter.id.includes('mana')) {
                 type = 'Mana';
-            } else if (targetCounter.classList.contains('hyphen-counter-input')) {
-                type = 'Hyphen';
             }
 
             if (targetCounter.id.includes('counter-value')) {
@@ -790,6 +813,8 @@ function initKeyConfigUI() {
     
     const keyLabels = {
         'toggleDrawer': 'ドロワー開閉',
+        'toggleCommon': '共通メニュー開閉',
+        'toggleBank': 'バンク開閉',
         'draw': '1ドロー',
         'stepForward': 'ステップ進行',
         'tap': 'タップ',
@@ -798,15 +823,15 @@ function initKeyConfigUI() {
         'memo': 'メモ編集',
         'toggleNav': 'ナビ切替',
         'flipBoard': '盤面反転',
-        'undo': 'Undo',
-        'redo': 'Redo',
+        'undo': '元に戻す',
+        'redo': 'やり直し',
         
         'phaseStart': 'ターン開始',
-        'phaseDraw': 'ドローフェイズ',
-        'phaseMana': 'マナフェイズ',
-        'phaseMain': 'メインフェイズ',
-        'phaseBattle': 'バトルフェイズ',
-        'phaseEnd': 'エンドフェイズ',
+        'phaseDraw': 'ドローステップ',
+        'phaseMana': 'マナステップ',
+        'phaseMain': 'メインステップ',
+        'phaseBattle': 'バトルステップ',
+        'phaseEnd': 'エンドステップ',
         'turnChange': 'ターンプレイヤー切替',
         'openDeck': 'デッキを開く',
         'openGrave': '墓地を開く',

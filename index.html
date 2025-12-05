@@ -202,7 +202,7 @@
                         <div class="hand-controls-top-wrapper" id="opponent-hand-controls-top-wrapper">
                             
                             <div class="extra-area-wrapper">
-                                <input type="text" class="extra-header-input" placeholder="-">
+                                <input type="text" class="extra-header-input" placeholder="ステータス">
                                 <div class="extra-grid">
                                     <div class="extra-column">
                                         <div class="extra-row"><input type="text" class="extra-text"></div>
@@ -265,7 +265,7 @@
 
                             <div class="shortcut-guide action-log-embedded fixed-orientation">
                                 <div class="guide-title" style="display: flex; justify-content: center; align-items: center; position: relative;">
-                                    Action Log
+                                    アクションログ
                                     <button id="download-log-btn" style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #a0a0e0; font-size: 1.1em; padding: 0; line-height: 1;" title="ログ保存">💾</button>
                                 </div>
                                 <div id="action-log-body" class="action-log-body-embedded"></div>
@@ -282,7 +282,7 @@
                     <button id="timer-pause-btn" class="step-btn" style="border: none; border-radius: 0; min-width: 30px; padding: 0 10px; background-color: #444; color: #fff; font-size: 1.2em; cursor: pointer;" title="一時停止/再開">▶</button>
                     <div id="turn-timer-container" style="display: flex; align-items: center; padding: 2px 8px; background-color: #333; color: #fff; border-left: 1px solid #555;">
                         <span style="font-size: 0.8em; margin-right: 5px;">Time:</span>
-                        <span id="turn-timer-display" style="font-weight: bold; font-size: 1.1em;">60</span>
+                        <span id="turn-timer-display" style="font-weight: bold; font-size: 1.1em;">180</span>
                     </div>
                 </div>
 
@@ -397,7 +397,7 @@
                         <div class="hand-controls-top-wrapper">
                             
                             <div class="extra-area-wrapper">
-                                <input type="text" class="extra-header-input" placeholder="-">
+                                <input type="text" class="extra-header-input" placeholder="ステータス">
                                 <div class="extra-grid">
                                     <div class="extra-column">
                                         <div class="extra-row"><input type="text" class="extra-text"></div>
@@ -459,20 +459,21 @@
                             </div>
 
                             <div class="shortcut-guide fixed-orientation">
-                                <div class="guide-title">Key Guide</div>
+                                <div class="guide-title">キーガイド</div>
                                 <div id="key-guide-list">
                                     <ul>
-                                        <li><span class="key">1-6</span> フェイズ</li>
+                                        <li><span class="key">1-6</span> ステップ</li>
                                         <li><span class="key">D</span> ドロー</li>
                                         <li><span class="key">Q-R</span> エリア</li>
                                         <li><span class="key">Space</span> 進む</li>
                                         <li><span class="key">T</span> タップ</li>
                                         <li><span class="key">F</span> 反転</li>
                                         <li><span class="key">Del</span> 削除</li>
-                                        <li><span class="key">M</span> メモ</li>
+                                        <li><span class="key">M</span> メモ編集</li>
                                         <li><span class="key">I/O</span> 賽/貨</li>
-                                        <li><span class="key">Z/Y</span> Undo</li>
-                                        <li><span class="key">Tab</span> 開閉</li>
+                                        <li><span class="key">Ctrl+Z</span> 元に戻す</li>
+                                        <li><span class="key">Ctrl+Y</span> やり直し</li>
+                                        <li><span class="key">Tab</span> ドロワー開閉</li>
                                         <li><span class="key">H</span> ナビ</li>
                                     </ul>
                                 </div>
@@ -562,8 +563,8 @@
         <textarea id="memo-editor-textarea" rows="5" placeholder="カードメモ..."></textarea>
         <div style="padding: 5px 15px; display: flex; gap: 10px; align-items: center; color: #ccc; font-size: 0.8em;">
             <span>文字サイズ: <input type="number" id="memo-font-size-input" class="lp-counter-input" style="width: 40px; font-size: 1em;" value="16"></span>
-            <span>幅: <input type="number" id="memo-width-input" class="lp-counter-input" style="width: 50px; font-size: 1em;" value="500"></span>
-            <span>高さ: <input type="number" id="memo-height-input" class="lp-counter-input" style="width: 50px; font-size: 1em;" value="200"></span>
+            <span>幅: <input type="number" id="memo-width-input" class="lp-counter-input" style="width: 50px; font-size: 1em;" value="600"></span>
+            <span>高さ: <input type="number" id="memo-height-input" class="lp-counter-input" style="width: 50px; font-size: 1em;" value="600"></span>
         </div>
         <div class="memo-editor-buttons">
             <button id="memo-editor-save">保存</button>
@@ -665,7 +666,7 @@
             </div>
 
             <div class="decoration-settings-section" style="margin-top: 15px;">
-                <div class="area-label" style="text-align: left; margin-bottom: 5px; border-bottom: 1px solid #555; padding-bottom: 2px;">Opponent (相手)</div>
+                <div class="area-label" style="text-align: left; margin-bottom: 5px; border-bottom: 1px solid #555; padding-bottom: 2px;">相手</div>
                 <div class="decoration-columns-container" style="display: flex; gap: 5px; flex-wrap: wrap;">
                     <div class="decoration-column" data-target-type="deck" data-owner="opponent">
                         <div class="column-header">デッキ</div>
@@ -876,60 +877,103 @@
                         <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div> 
+        </div> 
     </div>
 
     <button class="drawer-toggle" id="c-drawer-toggle">バンク</button>
     <div class="drawer-wrapper" id="c-drawer">
         <div class="drawer-content">
             <div class="drawer-tabs">
-                <button class="drawer-tab-btn active" data-target="c-free-space">カードバンク</button>
-                <button class="drawer-tab-btn" data-target="c-deck-storage-panel">デッキ保管庫</button>
+                <button class="drawer-tab-btn active" data-target="c-bank-panel">カードバンク</button>
+                <button class="drawer-tab-btn" data-target="c-user-storage-panel">ユーザー保管庫</button>
+                <button class="drawer-tab-btn" data-target="c-sample-storage-panel">サンプルデッキ</button>
+                <button class="drawer-tab-btn" data-target="c-io-panel">インポート/エクスポート</button>
             </div>
             <div class="drawer-main-area">
                 <div class="drawer-tab-content">
                     <div class="drawer-panels">
-                        <div class="drawer-free-space drawer-panel active" id="c-free-space">
-                            <span class="area-label bottom-deck-label">バンク内</span>
-                            <div class="drawer-search-sort-container">
-                                <input type="text" id="c-search-filter" class="drawer-search-input" placeholder="メモ検索...">
-                                <div class="drawer-sort-buttons">
-                                    <button class="sort-btn" data-sort="name">名前順</button>
-                                    <button class="sort-btn" data-sort="cost">マナ順</button>
-                                    <button class="sort-btn" data-sort="bp">BP順</button>
+                        <div class="drawer-panel active" id="c-bank-panel">
+                            <div class="drawer-free-space" id="c-free-space">
+                                <span class="area-label bottom-deck-label">バンク内</span>
+                                <div class="drawer-search-sort-container">
+                                    <input type="text" id="c-search-filter" class="drawer-search-input" placeholder="メモ検索...">
+                                    <div class="drawer-sort-buttons">
+                                        <button class="sort-btn" data-sort="name">名前順</button>
+                                        <button class="sort-btn" data-sort="cost">マナ順</button>
+                                        <button class="sort-btn" data-sort="bp">BP順</button>
+                                    </div>
+                                </div>
+                                <div class="free-space-slot-container">
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                                    <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
                                 </div>
                             </div>
-                            <div class="free-space-slot-container">
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
-                                <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div> <div class="card-slot"></div>
+                        </div>
+
+                        <div class="drawer-panel" id="c-user-storage-panel">
+                            <div style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                                <div style="padding: 5px 10px; font-weight: bold; color: #8abda0; background-color: rgba(0,0,0,0.2);">ユーザー保管庫</div>
+                                <div class="storage-grid-container" id="deck-storage-container" style="flex-shrink: 0;"></div>
                             </div>
                         </div>
-                        <div class="drawer-panel" id="c-deck-storage-panel">
-                            <div class="storage-grid-container" id="deck-storage-container"></div>
+
+                        <div class="drawer-panel" id="c-sample-storage-panel">
+                            <div style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                                <div style="padding: 5px 10px; font-weight: bold; color: #8abda0; background-color: rgba(0,0,0,0.2);">サンプルデッキ</div>
+                                <div class="storage-grid-container" id="sample-deck-container" style="flex-shrink: 0; min-height: 200px;"></div>
+                            </div>
                         </div>
+
+                        <div class="drawer-panel" id="c-io-panel">
+                            <div style="padding: 10px; height: 100%; display: flex; flex-direction: column; align-items: center;">
+                                <div style="margin-bottom: 10px; font-weight: bold; color: #8abda0; text-align: center; width: 100%;">ファイル操作 (JSON)</div>
+                                <div style="display: flex; gap: 15px; flex-direction: row; justify-content: center; width: 100%;">
+                                    
+                                    <div style="border: 1px solid #2f5f4f; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); width: 200px; flex-shrink: 0;">
+                                        <div style="text-align: center; font-size: 0.9em; color: #aaa; margin-bottom: 5px;">自分 (Player)</div>
+                                        <div style="display: flex; gap: 5px;">
+                                            <button class="draw-btn" id="import-deck-btn" style="flex: 1; padding: 5px;">読込</button>
+                                            <button class="draw-btn" id="export-deck-btn" style="flex: 1; padding: 5px;">保存</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="border: 1px solid #2f5f4f; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); width: 200px; flex-shrink: 0;">
+                                        <div style="text-align: center; font-size: 0.9em; color: #aaa; margin-bottom: 5px;">相手 (Opponent)</div>
+                                        <div style="display: flex; gap: 5px;">
+                                            <button class="draw-btn" id="opponent-import-deck-btn" style="flex: 1; padding: 5px;">読込</button>
+                                            <button class="draw-btn" id="opponent-export-deck-btn" style="flex: 1; padding: 5px;">保存</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 15px; font-size: 0.8em; color: #aaa; padding: 5px; text-align: center; max-width: 500px;">
+                                    ※ デッキ、EXデッキ、フリースペース、トークンの状態をJSONファイルとして保存・読み込みします。
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -1175,6 +1219,7 @@
                                     <div class="common-control-buttons">
                                         <button class="counter-btn" id="lp-auto-decrease-btn">LP自動減少</button>
                                         <button class="counter-btn" id="mana-auto-decrease-btn">マナ自動減少</button>
+                                        <button class="counter-btn" id="hyphen-auto-decrease-btn">●●自動減少</button>
                                     </div>
                                 </div>
 
@@ -1188,14 +1233,6 @@
                                     </div>
                                 </div>
                                 
-                                <div class="common-control-group">
-                                    <span class="area-label">デッキI/O (P)</span>
-                                    <div class="common-control-buttons">
-                                        <button class="draw-btn" id="export-deck-btn">エクスポート</button>
-                                        <button class="draw-btn" id="import-deck-btn">インポート</button>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
 
@@ -1210,6 +1247,7 @@
                                     <div class="common-control-buttons">
                                         <button class="counter-btn" id="opponent-lp-auto-decrease-btn">LP自動減少</button>
                                         <button class="counter-btn" id="opponent-mana-auto-decrease-btn">マナ自動減少</button>
+                                        <button class="counter-btn" id="opponent-hyphen-auto-decrease-btn">●●自動減少</button>
                                     </div>
                                 </div>
 
@@ -1223,14 +1261,6 @@
                                     </div>
                                 </div>
                                 
-                                <div class="common-control-group">
-                                    <span class="area-label">デッキI/O (O)</span>
-                                    <div class="common-control-buttons">
-                                        <button class="draw-btn" id="opponent-export-deck-btn">エクスポート</button>
-                                        <button class="draw-btn" id="opponent-import-deck-btn">インポート</button>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
 
@@ -1292,20 +1322,6 @@
                                 </div>
 
                                 <div class="common-control-group">
-                                    <span class="area-label">デュエル・タイマー設定</span>
-                                    <div class="settings-checkbox-list" id="duel-settings-container" style="height: auto; max-height: none;">
-                                         <label><input type="checkbox" id="setting-duel-reset" checked> 開始時リセット</label>
-                                         <label><input type="checkbox" id="setting-duel-shuffle" checked> 開始時シャッフル</label>
-                                         <label><input type="checkbox" id="setting-duel-draw" checked> 開始時5ドロー</label>
-                                         <label><input type="checkbox" id="setting-auto-flip" checked> 先行時盤面反転</label>
-                                    </div>
-                                    <div style="margin-top: 5px; color: #ccc; font-size: 0.9em; display: flex; align-items: center; gap: 5px;">
-                                        <span>制限時間:</span>
-                                        <input type="number" id="setting-timer-duration" class="lp-counter-input" style="width: 50px; font-size: 0.9em; padding: 2px;" value="60"> 秒
-                                    </div>
-                                </div>
-
-                                <div class="common-control-group">
                                     <span class="area-label">キーコンフィグ</span>
                                     <div id="key-config-container" class="settings-checkbox-list" style="max-height: 200px;">
                                         </div>
@@ -1324,6 +1340,20 @@
                                     </div>
                                     <div id="auto-config-container" class="settings-checkbox-list">
                                         </div>
+                                </div>
+                                <div class="common-control-group">
+                                    <span class="area-label">デュエル・タイマー設定</span>
+                                    <div class="settings-checkbox-list" id="duel-settings-container" style="height: auto; max-height: none;">
+                                         <label><input type="checkbox" id="setting-duel-reset" checked=""> 開始時リセット</label>
+                                         <label><input type="checkbox" id="setting-duel-shuffle" checked=""> 開始時シャッフル</label>
+                                         <label><input type="checkbox" id="setting-duel-draw" checked=""> 開始時5ドロー</label>
+                                         <label style="display: none;"><input type="checkbox" id="setting-auto-flip" checked=""> 先行時盤面反転</label>
+                                         <label><input type="checkbox" id="setting-auto-phase-timeout"> タイムアウト時、自動でステップ進行</label>
+                                    </div>
+                                    <div style="margin-top: 5px; color: #ccc; font-size: 0.9em; display: flex; align-items: center; gap: 5px;">
+                                        <span>制限時間:</span>
+                                        <input type="number" id="setting-timer-duration" class="lp-counter-input" style="width: 50px; font-size: 0.9em; padding: 2px;" value="180"> 秒
+                                    </div>
                                 </div>
                              </div>
                         </div>

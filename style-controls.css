@@ -1,7 +1,7 @@
 .card-preview-area {
     width: 322.56px; 
     height: 532.224px; 
-    background-color: #2a2a4e;
+    background-color: #ffffff;
     border: 3px solid #5a5a9a;
     border-radius: 5px;
     text-align: center;
@@ -1106,6 +1106,97 @@ body.board-flipped .opponent-wrapper .counter-badge {
 }
 
 .extra-text::placeholder {
+
     color: #555;
+
     font-size: 0.8em;
+
 }
+
+
+
+/* Stretch player counter wrapper to fill available space */
+
+
+
+#player-counter-wrapper {
+
+
+
+    flex-grow: 1;
+
+
+
+    align-items: stretch;
+
+
+
+}
+
+
+
+
+
+
+
+/* Make the stat groups inside the player wrapper grow to fill the stretched height */
+
+
+
+#player-counter-wrapper .hand-counter-group {
+
+
+
+    flex-grow: 1;
+
+
+
+    justify-content: center;
+
+
+
+}
+
+
+
+
+
+
+
+#opponent-counter-wrapper {
+
+
+
+    flex-grow: 1;
+
+
+
+    align-items: stretch;
+
+
+
+}
+
+
+
+
+
+
+
+#opponent-counter-wrapper .hand-counter-group {
+
+
+
+    flex-grow: 1;
+
+
+
+    justify-content: center;
+
+
+
+}
+
+
+
+

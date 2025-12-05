@@ -104,15 +104,32 @@ async function handleManaConsumption(memo, idPrefix) {
     const currentMana = manaInput ? (parseInt(manaInput.value) || 0) : 0;
 
     if (cost > currentMana) {
-        const confirmResult = await showCustomConfirm(`マナが足りません（コスト:${cost} / 現在:${currentMana}）。\nマナを消費せずに配置しますか？`);
-        if (confirmResult) {
-            return true; 
+        if (autoConfig.warnManaCost) {
+            return await showCustomConfirm(`マナが足りません（コスト:${cost} / 現在:${currentMana}）。\nマナを消費せずに配置しますか？`);
+        } else {
+            return true;
         }
-        return false; 
     }
 
-    const consumeConfirm = await showCustomConfirm(`マナを消費して配置しますか？\n(消費マナ: ${cost})`);
-    if (consumeConfirm) {
+    if (autoConfig.warnManaCost) {
+        const consumeConfirm = await showCustomConfirm(`マナを消費して配置しますか？\n(消費マナ: ${cost})`);
+        if (consumeConfirm) {
+            if (manaInput) {
+                manaInput.value = currentMana - cost;
+                if (typeof recordAction === 'function') {
+                    recordAction({
+                        type: 'counterChange',
+                        inputId: idPrefix + 'mana-counter-value',
+                        change: -cost
+                    });
+                }
+            }
+            return true;
+        } 
+        else {
+            return await showCustomConfirm("マナを消費せずに配置しますか？");
+        }
+    } else {
         if (manaInput) {
             manaInput.value = currentMana - cost;
             if (typeof recordAction === 'function') {
@@ -124,13 +141,6 @@ async function handleManaConsumption(memo, idPrefix) {
             }
         }
         return true;
-    } 
-    else {
-        const noConsumeConfirm = await showCustomConfirm("マナを消費せずに配置しますか？");
-        if (noConsumeConfirm) {
-            return true; 
-        }
-        return false; 
     }
 }
 
@@ -156,7 +166,7 @@ function tryAutoManaTapIn(slotElement, idPrefix, zoneId) {
             recordAction({
                 type: 'rotate',
                 zoneId: zoneId,
-                slotIndex: Array.from(slotElement.parentNode.children).indexOf(slotElement),
+                slotIndex: Array.from(slot.parentNode.children).indexOf(slotElement),
                 rotation: newRotation
             });
         }
@@ -168,7 +178,9 @@ async function checkMainPhaseWarning(targetBaseId) {
     
     if (fieldZones.some(z => targetBaseId.includes(z))) {
         if (typeof currentStepIndex !== 'undefined' && currentStepIndex !== 3) { 
-            return await showCustomConfirm("メインフェイズではありません。カードを配置しますか？");
+            if (typeof autoConfig !== 'undefined' && autoConfig.warnFieldPlacementPhase) {
+                return await showCustomConfirm("メインステップではありません。カードを配置しますか？");
+            }
         }
     }
     return true;
@@ -373,7 +385,7 @@ function handleSlotClick(e) {
 
         if (hasCard || isPlayerIcon) {
             if (typeof openBattleConfirmModal === 'function') {
-                openBattleConfirmModal(currentAttacker, slot);
+                openBattleConfirmModal(currentAttackers, slot);
             }
         }
         return;
@@ -451,11 +463,25 @@ function handleSlotClick(e) {
                     
                     const currentTurnVal = document.getElementById('common-turn-value') ? document.getElementById('common-turn-value').value : "1";
 
+                    let rotation = 0;
+                    if (baseParentZoneId === 'extra-image-zone') {
+                        const tempImg = new Image();
+                        await new Promise(r => {
+                            tempImg.onload = r;
+                            tempImg.onerror = r;
+                            tempImg.src = imageUrl;
+                        });
+                        if (tempImg.height > tempImg.width) {
+                            rotation = 90;
+                        }
+                    }
+
                     const thumb = createCardThumbnail({
                         src: imageData,
                         memo: DEFAULT_CARD_MEMO,
                         ownerPrefix: owner,
-                        deployedTurn: currentTurnVal
+                        deployedTurn: currentTurnVal,
+                        rotation: rotation
                     }, slot, false, false, owner);
                     
                     if (baseParentZoneId === 'extra-image-zone') {
@@ -498,7 +524,8 @@ function handleSlotClick(e) {
                             slotIndex: Array.from(slot.parentNode.children).indexOf(slot),
                             cardData: {
                                 src: imageData,
-                                memo: DEFAULT_CARD_MEMO
+                                memo: DEFAULT_CARD_MEMO,
+                                rotation: rotation
                             }
                         });
                     }
@@ -775,6 +802,19 @@ ${bpText}////非表示/
         
         const currentTurnVal = document.getElementById('common-turn-value') ? document.getElementById('common-turn-value').value : "1";
 
+        let rotation = 0;
+        if (targetParentBaseId === 'extra-image-zone') {
+            const tempImg = new Image();
+            await new Promise(r => {
+                tempImg.onload = r;
+                tempImg.onerror = r;
+                tempImg.src = imageUrl;
+            });
+            if (tempImg.height > tempImg.width) {
+                rotation = 90;
+            }
+        }
+
         if (targetParentBaseId === 'icon-zone') {
             const existingThumbnail = currentSlot.querySelector('.thumbnail[data-is-decoration="true"]');
             if (existingThumbnail) {
@@ -791,7 +831,13 @@ ${bpText}////非表示/
                 currentSlot.removeChild(existingThumbnail);
                 resetSlotToDefault(currentSlot);
             }
-             createCardThumbnail({ src: imageUrl, memo: memo, ownerPrefix: idPrefix, deployedTurn: currentTurnVal }, currentSlot, false, false, idPrefix);
+             createCardThumbnail({ 
+                 src: imageUrl, 
+                 memo: memo, 
+                 ownerPrefix: idPrefix, 
+                 deployedTurn: currentTurnVal,
+                 rotation: rotation
+             }, currentSlot, false, false, idPrefix);
             if (isTargetStackable) {
                 updateSlotStackState(currentSlot);
             }
@@ -809,10 +855,41 @@ ${bpText}////非表示/
         if (typeof window.updateSummoningSicknessVisuals === 'function') {
             window.updateSummoningSicknessVisuals();
         }
+
+        const zoneId = getParentZoneId(currentSlot);
+        const baseId = getBaseId(zoneId);
+        if (baseId.endsWith('-back-slots')) {
+            const mainBaseId = baseId.replace('-back-slots', '');
+            if (['deck', 'grave', 'exclude', 'side-deck'].includes(mainBaseId)) {
+                syncMainZoneImage(mainBaseId, idPrefix);
+            }
+        }
     };
 
     const targetParentZoneId = getParentZoneId(targetSlot);
     const targetParentBaseId = getBaseId(targetParentZoneId);
+    
+    const pileZones = ['deck', 'grave', 'exclude', 'side-deck'];
+    if (pileZones.includes(targetParentBaseId)) {
+        const backSlotsId = idPrefix + targetParentBaseId + '-back-slots';
+        const container = document.getElementById(backSlotsId);
+        if (container) {
+            const slotsContainer = container.querySelector('.deck-back-slot-container');
+            if (slotsContainer) {
+                const allSlots = Array.from(slotsContainer.querySelectorAll('.card-slot'));
+                const availableSlots = allSlots.filter(s => !s.querySelector('.thumbnail'));
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (availableSlots[i]) {
+                        await processFile(files[i], availableSlots[i]);
+                    }
+                }
+                arrangeSlots(backSlotsId); 
+            }
+        }
+        return; 
+    }
+
     const isSlotSpecificDrop = targetSlot.classList.contains('card-slot');
 
     if (isSlotSpecificDrop && !targetParentBaseId.endsWith('-back-slots') && !targetParentBaseId.includes('free-space')) {
@@ -1524,3 +1601,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 100);
 });
+
+window.duplicateCardToFreeSpace = async function(sourceCard) {
+    if (typeof saveStateForUndo === 'function') saveStateForUndo(); 
+
+    const freeSpaceContainer = document.getElementById('free-space-slots');
+    if (!freeSpaceContainer) return;
+    
+    const slotsContainer = freeSpaceContainer.querySelector('.free-space-slot-container');
+    if (!slotsContainer) return;
+
+    const emptySlot = Array.from(slotsContainer.querySelectorAll('.card-slot')).find(s => !s.querySelector('.thumbnail'));
+    
+    if (!emptySlot) {
+        if (typeof showCustomAlert === 'function') {
+            await showCustomAlert("フリースペースに空きがありません。");
+        } else {
+            alert("フリースペースに空きがありません。");
+        }
+        return;
+    }
+
+    const imgElement = sourceCard.querySelector('.card-image');
+    const cardData = {
+        src: imgElement ? imgElement.src : '',
+        memo: sourceCard.dataset.memo || '',
+        flavor1: sourceCard.dataset.flavor1 || '',
+        flavor2: sourceCard.dataset.flavor2 || '',
+        ownerPrefix: '', 
+        customCounters: JSON.parse(sourceCard.dataset.customCounters || '[]'),
+        isFlipped: false, 
+        rotation: 0
+    };
+
+    if (typeof createCardThumbnail === 'function') {
+        createCardThumbnail(cardData, emptySlot, false, false, '');
+        if (typeof updateSlotStackState === 'function') updateSlotStackState(emptySlot);
+        playSe('カードを配置する.mp3');
+        
+        const drawer = document.getElementById('player-drawer');
+        if (drawer) {
+            drawer.classList.add('open');
+            if(typeof activateDrawerTab === 'function') activateDrawerTab('free-space-slots', drawer);
+        }
+    }
+};

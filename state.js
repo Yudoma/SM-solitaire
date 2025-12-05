@@ -18,7 +18,7 @@ let actionLog = [];
 let replayStartTime = 0;
 let replayTimerIds = [];
 
-let turnTimerDuration = 60;
+let turnTimerDuration = 180;
 let currentTimerId = null;
 let timerRemaining = 0;
 
@@ -68,7 +68,8 @@ const seConfig = {
     'オナニー後.mp3': true,
     'ターン開始.mp3': true,
     'BPプラス.mp3': true,
-    'BPマイナス.mp3': true
+    'BPマイナス.mp3': true,
+    'デュエル開始.mp3': true
 };
 
 const effectConfig = {
@@ -79,7 +80,8 @@ const effectConfig = {
     'target': true,
     'autoDecrease': true,
     'blocker': true,
-    'bpChange': true
+    'bpChange': true,
+    'statusFloat': true
 };
 
 const autoConfig = {
@@ -92,6 +94,7 @@ const autoConfig = {
     'autoGameEnd': true,
     'autoBpDestruction': true,
     'autoMasturbateDrain': true,
+    'autoPhaseOnTimeout': false,
 
     'warnMasturbateDrain': true,
     'warnFriendlyFire': true,
@@ -99,28 +102,31 @@ const autoConfig = {
     'limitManaPlacement': false,
     'warnManaCost': false,
     'warnManaPlacementPhase': false,
+    'warnFieldPlacementPhase': false,
     'warnAttackPhase': false,
+    'warnUntapPhase': false,
     'autoDrawPhase': true,
     'msgDrawPhase': false,
     'msgUntapPhase': false,
-    'warnUntapPhase': true,
     'msgMainPhase': false,
     'msgBattlePhase': false,
     'msgEndPhase': false,
     'msgStartPhase': false,
-    'autoBoardFlip': false,
+    'autoBoardFlip': true,
 
     'autoResetBpOnLeave': true,
     'autoDuelReset': true,
     'autoDuelShuffle': true,
     'autoDuelDraw': true,
 
-    'autoUntapPhase': false,
+    'autoUntapPhase': true,
     'msgPhaseCutin': true
 };
 
 const keyConfig = {
     'toggleDrawer': 'Tab',
+    'toggleCommon': 'x',
+    'toggleBank': 'v',
     'draw': 'd',
     'stepForward': ' ',
     'tap': 't',
@@ -155,7 +161,7 @@ window.customCounterTypes = [];
 
 let isBattleTargetMode = false;
 let isBattleConfirmMode = false;
-let currentAttacker = null;
+let currentAttackers = [];
 let currentBattleTarget = null;
 
 let currentDeleteHandler = null;
@@ -191,6 +197,8 @@ let deckStorageData = Array.from({ length: 8 }, (_, i) => ({
     name: `Deck ${i + 1}`,
     mainDeckData: null,
     exDeckData: null,
+    freeSpaceData: null,
+    tokenData: null,
     thumbnailSrc: null,
     counts: { main: 0, ex: 0 }
 }));

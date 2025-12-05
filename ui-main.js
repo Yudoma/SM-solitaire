@@ -1,3 +1,411 @@
+window.renderDeckStorage = async function() {
+    const container = document.getElementById('deck-storage-container');
+    const sampleContainer = document.getElementById('sample-deck-container');
+    
+    if (container) {
+        container.innerHTML = '';
+        if (typeof deckStorageData !== 'undefined') {
+            deckStorageData.forEach((slot, index) => {
+                const caseEl = document.createElement('div');
+                caseEl.className = 'deck-case';
+                
+                const header = document.createElement('div');
+                header.className = 'deck-case-header';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'deck-case-name-input';
+                input.value = slot.name;
+                input.addEventListener('change', (e) => {
+                    updateStorageName(index, e.target.value);
+                });
+                header.appendChild(input);
+                
+                const thumbArea = document.createElement('div');
+                thumbArea.className = 'deck-case-thumbnail';
+                
+                if (slot.thumbnailSrc) {
+                    const img = document.createElement('img');
+                    img.src = slot.thumbnailSrc;
+                    thumbArea.appendChild(img);
+                    
+                    const counts = document.createElement('div');
+                    counts.className = 'deck-case-counts';
+                    counts.textContent = `メイン: ${slot.counts.main}\nEX: ${slot.counts.ex}`;
+                    thumbArea.appendChild(counts);
+                } else {
+                    const emptyText = document.createElement('span');
+                    emptyText.className = 'empty-text';
+                    emptyText.textContent = '空';
+                    thumbArea.appendChild(emptyText);
+                }
+                
+                const controls = document.createElement('div');
+                controls.className = 'deck-case-controls';
+                
+                const row1 = document.createElement('div');
+                row1.className = 'deck-control-row';
+                const saveP = document.createElement('button');
+                saveP.className = 'deck-storage-btn btn-save-p';
+                saveP.textContent = 'Pから登録';
+                saveP.title = '現在の自分(Player)のデッキをここに保存';
+                saveP.onclick = () => saveToStorage(index, 'player');
+                
+                const saveO = document.createElement('button');
+                saveO.className = 'deck-storage-btn btn-save-o';
+                saveO.textContent = 'Oから登録';
+                saveO.title = '現在の相手(Opponent)のデッキをここに保存';
+                saveO.onclick = () => saveToStorage(index, 'opponent');
+                
+                row1.appendChild(saveP);
+                row1.appendChild(saveO);
+                
+                const row2 = document.createElement('div');
+                row2.className = 'deck-control-row';
+                const loadP = document.createElement('button');
+                loadP.className = 'deck-storage-btn btn-load-p';
+                loadP.textContent = 'Pへ適用';
+                loadP.title = 'この内容を自分(Player)のデッキに展開';
+                loadP.onclick = () => loadFromStorage(index, 'player');
+                if(!slot.mainDeckData) loadP.style.opacity = '0.5';
+
+                const loadO = document.createElement('button');
+                loadO.className = 'deck-storage-btn btn-load-o';
+                loadO.textContent = 'Oへ適用';
+                loadO.title = 'この内容を相手(Opponent)のデッキに展開';
+                loadO.onclick = () => loadFromStorage(index, 'opponent');
+                if(!slot.mainDeckData) loadO.style.opacity = '0.5';
+
+                row2.appendChild(loadP);
+                row2.appendChild(loadO);
+                
+                controls.appendChild(row1);
+                controls.appendChild(row2);
+                
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'deck-case-delete';
+                deleteBtn.textContent = '×';
+                deleteBtn.title = 'このスロットを空にする';
+                deleteBtn.onclick = () => deleteFromStorage(index);
+                
+                caseEl.appendChild(header);
+                caseEl.appendChild(thumbArea);
+                caseEl.appendChild(controls);
+                caseEl.appendChild(deleteBtn);
+                
+                container.appendChild(caseEl);
+            });
+        }
+    }
+
+    if (sampleContainer) {
+        sampleContainer.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const fileName = `sample/sample_deck_${i}.json`;
+            try {
+                const response = await fetch(fileName);
+                if (response.ok) {
+                    const data = await response.json();
+                    createSampleSlot(sampleContainer, i, data);
+                } else {
+                    createEmptySampleSlot(sampleContainer, i);
+                }
+            } catch (e) {
+                console.warn(`Sample deck ${i} not found.`);
+                createEmptySampleSlot(sampleContainer, i);
+            }
+        }
+    }
+};
+
+function createEmptySampleSlot(container, index) {
+    const caseEl = document.createElement('div');
+    caseEl.className = 'deck-case';
+    caseEl.style.opacity = '0.6';
+    
+    const header = document.createElement('div');
+    header.className = 'deck-case-header';
+    header.style.textAlign = 'center';
+    header.style.color = '#ccc';
+    header.style.fontSize = '0.8em';
+    header.textContent = `No Data ${index}`;
+    
+    const thumbArea = document.createElement('div');
+    thumbArea.className = 'deck-case-thumbnail';
+    const emptyText = document.createElement('span');
+    emptyText.className = 'empty-text';
+    emptyText.textContent = '-';
+    thumbArea.appendChild(emptyText);
+    
+    // Add dummy controls to keep UI consistent
+    const controls = document.createElement('div');
+    controls.className = 'deck-case-controls';
+    const row = document.createElement('div');
+    row.className = 'deck-control-row';
+    const loadP = document.createElement('button');
+    loadP.className = 'deck-storage-btn btn-load-p';
+    loadP.textContent = 'Pへ適用';
+    loadP.disabled = true;
+    loadP.style.opacity = '0.5';
+    loadP.style.cursor = 'default';
+    const loadO = document.createElement('button');
+    loadO.className = 'deck-storage-btn btn-load-o';
+    loadO.textContent = 'Oへ適用';
+    loadO.disabled = true;
+    loadO.style.opacity = '0.5';
+    loadO.style.cursor = 'default';
+    row.appendChild(loadP);
+    row.appendChild(loadO);
+    controls.appendChild(row);
+
+    caseEl.appendChild(header);
+    caseEl.appendChild(thumbArea);
+    caseEl.appendChild(controls);
+    container.appendChild(caseEl);
+}
+
+function createSampleSlot(container, index, data) {
+    const caseEl = document.createElement('div');
+    caseEl.className = 'deck-case';
+    
+    const header = document.createElement('div');
+    header.className = 'deck-case-header';
+    const title = document.createElement('div');
+    title.className = 'deck-case-name-input';
+    title.textContent = `Sample ${index}`;
+    title.style.border = 'none';
+    title.style.background = 'transparent';
+    header.appendChild(title);
+    
+    const thumbArea = document.createElement('div');
+    thumbArea.className = 'deck-case-thumbnail';
+    
+    let thumbSrc = null;
+    let mainCount = 0;
+    let exCount = 0;
+    
+    if (data.deck && Array.isArray(data.deck)) {
+        for(const cards of data.deck) {
+            if (cards && cards.length > 0) {
+                mainCount += cards.length;
+                if (!thumbSrc) thumbSrc = cards[0].src;
+            }
+        }
+    }
+    if (data.sideDeck && Array.isArray(data.sideDeck)) {
+        for(const cards of data.sideDeck) {
+            if (cards && cards.length > 0) exCount += cards.length;
+        }
+    }
+    
+    if (thumbSrc) {
+        const img = document.createElement('img');
+        img.src = thumbSrc;
+        thumbArea.appendChild(img);
+        
+        const counts = document.createElement('div');
+        counts.className = 'deck-case-counts';
+        counts.textContent = `メイン: ${mainCount}\nEX: ${exCount}`;
+        thumbArea.appendChild(counts);
+    } else {
+        const emptyText = document.createElement('span');
+        emptyText.className = 'empty-text';
+        emptyText.textContent = 'No Image';
+        thumbArea.appendChild(emptyText);
+    }
+    
+    const controls = document.createElement('div');
+    controls.className = 'deck-case-controls';
+    
+    const row = document.createElement('div');
+    row.className = 'deck-control-row';
+    
+    const loadP = document.createElement('button');
+    loadP.className = 'deck-storage-btn btn-load-p';
+    loadP.textContent = 'Pへ適用';
+    loadP.onclick = () => loadFromSample(data, 'player');
+    
+    const loadO = document.createElement('button');
+    loadO.className = 'deck-storage-btn btn-load-o';
+    loadO.textContent = 'Oへ適用';
+    loadO.onclick = () => loadFromSample(data, 'opponent');
+    
+    row.appendChild(loadP);
+    row.appendChild(loadO);
+    controls.appendChild(row);
+    
+    caseEl.appendChild(header);
+    caseEl.appendChild(thumbArea);
+    caseEl.appendChild(controls);
+    container.appendChild(caseEl);
+}
+
+window.loadFromSample = async function(data, target) {
+    playSe('ボタン共通.mp3');
+    
+    const label = target === 'player' ? '自分(Player)' : '相手(Opponent)';
+    const confirmMsg = `現在の${label}のデッキ・盤面情報は上書きされます。\nサンプルデッキを適用しますか？`;
+    
+    if (typeof showCustomConfirm === 'function') {
+        if (!await showCustomConfirm(confirmMsg)) return;
+    } else if (!confirm(confirmMsg)) return;
+    
+    if (typeof saveStateForUndo === 'function') saveStateForUndo();
+    
+    const prefix = target === 'opponent' ? 'opponent-' : '';
+    
+    if (typeof clearZoneData === 'function') {
+        clearZoneData(prefix + 'deck-back-slots');
+        clearZoneData(prefix + 'side-deck-back-slots');
+        clearZoneData(prefix + 'free-space-slots');
+        clearZoneData(prefix + 'token-zone-slots');
+    }
+    
+    if (typeof applyDataToZone === 'function') {
+        if (data.deck) applyDataToZone(prefix + 'deck-back-slots', data.deck);
+        if (data.sideDeck) applyDataToZone(prefix + 'side-deck-back-slots', data.sideDeck);
+        if (data.freeSpace) applyDataToZone(prefix + 'free-space-slots', data.freeSpace);
+        if (data.token) applyDataToZone(prefix + 'token-zone-slots', data.token);
+    }
+    
+    if (typeof syncMainZoneImage === 'function') {
+        syncMainZoneImage('deck', prefix);
+        syncMainZoneImage('side-deck', prefix);
+    }
+    
+    playSe('シャッフル.mp3');
+    
+    if (typeof window.updatePlaymatState === 'function') {
+        window.updatePlaymatState();
+    }
+};
+
+window.saveToStorage = async function(index, source) {
+    playSe('ボタン共通.mp3');
+    
+    const label = source === 'player' ? '自分(Player)' : '相手(Opponent)';
+    const confirmMsg = `スロット${index + 1}に、現在の${label}のデッキ情報を上書き登録しますか？`;
+    
+    if (typeof showCustomConfirm === 'function') {
+        if (!await showCustomConfirm(confirmMsg)) return;
+    } else if (!confirm(confirmMsg)) return;
+    
+    const prefix = source === 'opponent' ? 'opponent-' : '';
+    
+    if (typeof extractZoneData !== 'function') return;
+    
+    const mainDeck = extractZoneData(prefix + 'deck-back-slots');
+    const sideDeck = extractZoneData(prefix + 'side-deck-back-slots');
+    const freeSpace = extractZoneData(prefix + 'free-space-slots');
+    const tokenZone = extractZoneData(prefix + 'token-zone-slots');
+    
+    let thumbSrc = null;
+    let mainCount = 0;
+    
+    if (mainDeck && Array.isArray(mainDeck)) {
+        for(const cards of mainDeck) {
+            if (cards && cards.length > 0) {
+                mainCount += cards.length;
+                if (!thumbSrc) thumbSrc = cards[0].src;
+            }
+        }
+    }
+    
+    let exCount = 0;
+    if (sideDeck && Array.isArray(sideDeck)) {
+        for(const cards of sideDeck) {
+            if (cards && cards.length > 0) {
+                exCount += cards.length;
+                if (!thumbSrc) thumbSrc = cards[0].src; 
+            }
+        }
+    }
+    
+    deckStorageData[index].mainDeckData = mainDeck;
+    deckStorageData[index].exDeckData = sideDeck;
+    deckStorageData[index].freeSpaceData = freeSpace;
+    deckStorageData[index].tokenData = tokenZone;
+    deckStorageData[index].thumbnailSrc = thumbSrc;
+    deckStorageData[index].counts = { main: mainCount, ex: exCount };
+    
+    playSe('カードを配置する.mp3');
+    renderDeckStorage();
+};
+
+window.loadFromStorage = async function(index, target) {
+    playSe('ボタン共通.mp3');
+    
+    const slot = deckStorageData[index];
+    if (!slot.mainDeckData && !slot.exDeckData && !slot.freeSpaceData && !slot.tokenData) return;
+    
+    const label = target === 'player' ? '自分(Player)' : '相手(Opponent)';
+    const confirmMsg = `現在の${label}のデッキ・EXデッキ・フリー・トークンエリアは上書きされます。\n「${slot.name}」を適用しますか？`;
+    
+    if (typeof showCustomConfirm === 'function') {
+        if (!await showCustomConfirm(confirmMsg)) return;
+    } else if (!confirm(confirmMsg)) return;
+    
+    if (typeof saveStateForUndo === 'function') saveStateForUndo();
+    
+    const prefix = target === 'opponent' ? 'opponent-' : '';
+    
+    if (typeof clearZoneData === 'function') {
+        clearZoneData(prefix + 'deck-back-slots');
+        clearZoneData(prefix + 'side-deck-back-slots');
+        clearZoneData(prefix + 'free-space-slots');
+        clearZoneData(prefix + 'token-zone-slots');
+    }
+    
+    if (typeof applyDataToZone === 'function') {
+        if (slot.mainDeckData) applyDataToZone(prefix + 'deck-back-slots', slot.mainDeckData);
+        if (slot.exDeckData) applyDataToZone(prefix + 'side-deck-back-slots', slot.exDeckData);
+        if (slot.freeSpaceData) applyDataToZone(prefix + 'free-space-slots', slot.freeSpaceData);
+        if (slot.tokenData) applyDataToZone(prefix + 'token-zone-slots', slot.tokenData);
+    }
+    
+    if (typeof syncMainZoneImage === 'function') {
+        syncMainZoneImage('deck', prefix);
+        syncMainZoneImage('side-deck', prefix);
+    }
+    
+    playSe('シャッフル.mp3');
+    
+    if (typeof window.updatePlaymatState === 'function') {
+        window.updatePlaymatState();
+    }
+};
+
+window.deleteFromStorage = async function(index) {
+    playSe('ボタン共通.mp3');
+    
+    const slot = deckStorageData[index];
+    if (!slot.mainDeckData && !slot.exDeckData && !slot.freeSpaceData && !slot.tokenData) return;
+
+    const confirmMsg = `スロット${index + 1}「${slot.name}」の内容を削除しますか？`;
+    
+    if (typeof showCustomConfirm === 'function') {
+        if (!await showCustomConfirm(confirmMsg)) return;
+    } else if (!confirm(confirmMsg)) return;
+    
+    deckStorageData[index] = {
+        id: `deck-slot-${index}`,
+        name: `Deck ${index + 1}`,
+        mainDeckData: null,
+        exDeckData: null,
+        freeSpaceData: null,
+        tokenData: null,
+        thumbnailSrc: null,
+        counts: { main: 0, ex: 0 }
+    };
+    
+    renderDeckStorage();
+};
+
+window.updateStorageName = function(index, newName) {
+    if (deckStorageData[index]) {
+        deckStorageData[index].name = newName;
+    }
+};
+
 window.setupUI = function() {
     if (window.isUiSetupDone) return;
     window.isUiSetupDone = true;
@@ -139,6 +547,9 @@ window.setupUI = function() {
     playerAutoDecreaseInput = document.getElementById('player-auto-decrease-interval');
     opponentAutoDecreaseInput = document.getElementById('opponent-auto-decrease-interval');
     
+    hyphenAutoDecreaseBtn = document.getElementById('hyphen-auto-decrease-btn');
+    opponentHyphenAutoDecreaseBtn = document.getElementById('opponent-hyphen-auto-decrease-btn');
+    
     shuffleDeckBtn = document.getElementById('shuffle-deck');
     opponentShuffleDeckBtn = document.getElementById('opponent-shuffle-deck');
     shuffleHandBtn = document.getElementById('shuffle-hand');
@@ -210,7 +621,8 @@ window.setupUI = function() {
             'target': '対象選択',
             'autoDecrease': '自動減少',
             'blocker': 'ブロッカー表示',
-            'bpChange': 'BP変動演出'
+            'bpChange': 'BP変動演出',
+            'statusFloat': 'ステータス表示'
         };
         Object.keys(effectConfig).forEach(key => {
             const label = document.createElement('label');
@@ -263,31 +675,33 @@ window.setupUI = function() {
             
             'warnMasturbateDrain': '警告:オナニーBP減少',
             'warnFriendlyFire': '警告:自軍への攻撃',
-            'warnSummoningSickness': '警告:召喚酔い攻撃',
+            'warnSummoningSickness': '警告:召喚酔い時攻撃',
             'limitManaPlacement': '警告:マナ手出し制限(1枚)',
             'warnManaCost': '警告:マナコスト不足',
             'warnManaPlacementPhase': '警告:メイン以外マナ操作',
+            'warnFieldPlacementPhase': '警告:メイン以外フィールド配置',
             'warnAttackPhase': '警告:バトル以外攻撃',
             'warnUntapPhase': '警告:アンタップ以外で起こす',
             
-            'autoDrawPhase': 'ドローフェーズ自動ドロー',
+            'autoDrawPhase': 'ドローステップ自動ドロー',
             'autoBoardFlip': 'ターン開始時盤面反転',
             'autoResetBpOnLeave': '盤面移動時BPリセット',
             
-            'msgDrawPhase': '表示:ドローフェーズ',
-            'msgUntapPhase': '表示:アンタップフェーズ',
-            'msgMainPhase': '表示:メインフェーズ',
-            'msgBattlePhase': '表示:バトルフェーズ',
-            'msgEndPhase': '表示:エンドフェーズ',
-            'msgStartPhase': '表示:ターン開始',
+            'msgDrawPhase': '表示:ドローステップ説明',
+            'msgUntapPhase': '表示:アンタップステップ説明',
+            'msgMainPhase': '表示:メインステップ説明',
+            'msgBattlePhase': '表示:バトルステップ説明',
+            'msgEndPhase': '表示:エンドステップ説明',
+            'msgStartPhase': '表示:ターン開始説明',
             
-            'autoUntapPhase': 'アンタップフェーズ自動処理',
-            'msgPhaseCutin': 'フェイズカットイン表示'
+            'autoUntapPhase': 'アンタップステップ自動処理',
+            'msgPhaseCutin': 'ステップカットイン表示'
         };
         
         Object.keys(autoConfig).forEach(key => {
             if (key.startsWith('autoDuel')) return;
             if (key === 'drawFlipped') return;
+            if (key === 'autoPhaseOnTimeout') return;
 
             const label = document.createElement('label');
             const input = document.createElement('input');
@@ -310,7 +724,7 @@ window.setupUI = function() {
     if (autoCheckAllBtn) {
         autoCheckAllBtn.addEventListener('click', () => {
             playSe('ボタン共通.mp3');
-            if (typeof autoConfig !== 'undefined') Object.keys(autoConfig).forEach(key => { if(!key.startsWith('autoDuel') && key !== 'drawFlipped') autoConfig[key] = true; });
+            if (typeof autoConfig !== 'undefined') Object.keys(autoConfig).forEach(key => { if(!key.startsWith('autoDuel') && key !== 'drawFlipped' && key !== 'autoPhaseOnTimeout') autoConfig[key] = true; });
             const boxes = autoConfigContainer.querySelectorAll('input[type="checkbox"]');
             boxes.forEach(box => box.checked = true);
         });
@@ -318,20 +732,21 @@ window.setupUI = function() {
     if (autoUncheckAllBtn) {
         autoUncheckAllBtn.addEventListener('click', () => {
             playSe('ボタン共通.mp3');
-            if (typeof autoConfig !== 'undefined') Object.keys(autoConfig).forEach(key => { if(!key.startsWith('autoDuel') && key !== 'drawFlipped') autoConfig[key] = false; });
+            if (typeof autoConfig !== 'undefined') Object.keys(autoConfig).forEach(key => { if(!key.startsWith('autoDuel') && key !== 'drawFlipped' && key !== 'autoPhaseOnTimeout') autoConfig[key] = false; });
             const boxes = autoConfigContainer.querySelectorAll('input[type="checkbox"]');
             boxes.forEach(box => box.checked = false);
         });
     }
 
-    ['setting-duel-reset', 'setting-duel-shuffle', 'setting-duel-draw', 'setting-auto-flip'].forEach(id => {
+    ['setting-duel-reset', 'setting-duel-shuffle', 'setting-duel-draw', 'setting-auto-flip', 'setting-auto-phase-timeout'].forEach(id => {
         const checkbox = document.getElementById(id);
         if(checkbox && typeof autoConfig !== 'undefined') {
             const configKeyMap = {
                 'setting-duel-reset': 'autoDuelReset',
                 'setting-duel-shuffle': 'autoDuelShuffle',
                 'setting-duel-draw': 'autoDuelDraw',
-                'setting-auto-flip': 'autoBoardFlip' 
+                'setting-auto-flip': 'autoBoardFlip',
+                'setting-auto-phase-timeout': 'autoPhaseOnTimeout'
             };
             const key = configKeyMap[id];
             checkbox.checked = autoConfig[key];
@@ -353,10 +768,35 @@ window.setupUI = function() {
         setupCounters('opponent-');
     }
 
+    const setupHyphenLabelLink = (prefix) => {
+        const group = document.getElementById(prefix + 'hyphen-counter-group');
+        if (group) {
+            const input = group.querySelector('.header-input');
+            if (input) {
+                const updateLabel = () => {
+                    const btn = document.getElementById(prefix + 'hyphen-auto-decrease-btn');
+                    if (!btn) return;
+
+                    const val = input.value || '●●';
+                    const newText = `${val}自動減少`;
+                    if (btn.textContent === '停止') {
+                        btn.dataset.originalText = newText;
+                    } else {
+                        btn.textContent = newText;
+                        btn.dataset.originalText = newText;
+                    }
+                };
+                input.addEventListener('input', updateLabel);
+                updateLabel();
+            }
+        }
+    };
+    setupHyphenLabelLink('');
+    setupHyphenLabelLink('opponent-');
+
     if(typeof setupDrawerResize === 'function') setupDrawerResize();
     if(typeof setupHorizontalScroll === 'function') setupHorizontalScroll();
     
-    // デッキ保管庫の初期描画
     if(typeof window.renderDeckStorage === 'function') {
         window.renderDeckStorage();
     }
@@ -477,6 +917,17 @@ window.setupUI = function() {
             e.preventDefault();
             const toggleBtnId = isFlipped ? 'opponent-drawer-toggle' : 'player-drawer-toggle';
             document.getElementById(toggleBtnId)?.click();
+            return;
+        }
+
+        if (lowerKey === conf.toggleCommon?.toLowerCase()) {
+            e.preventDefault();
+            commonDrawerToggle?.click();
+            return;
+        }
+        if (lowerKey === conf.toggleBank?.toLowerCase()) {
+            e.preventDefault();
+            cDrawerToggle?.click();
             return;
         }
 
@@ -1018,7 +1469,7 @@ window.setupUI = function() {
         openBankDrawerBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             playSe('ボタン共通.mp3');
-            toggleDrawerWithTab('c-drawer', 'c-free-space');
+            toggleDrawerWithTab('c-drawer', 'c-bank-panel');
         });
     }
     
@@ -1059,7 +1510,7 @@ window.setupUI = function() {
         if (opponentDrawer) activateDrawerTab('opponent-deck-back-slots', opponentDrawer);
 
         if (commonDrawer) activateDrawerTab('common-general-panel', commonDrawer);
-        if (cDrawer) activateDrawerTab('c-free-space', cDrawer);
+        if (cDrawer) activateDrawerTab('c-bank-panel', cDrawer);
     }
     
     const commonDrawerHeader = document.getElementById('common-drawer-header');
@@ -1135,221 +1586,3 @@ window.setupUI = function() {
         }
     }
 };
-
-window.renderDeckStorage = function() {
-    const container = document.getElementById('deck-storage-container');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (typeof deckStorageData === 'undefined') return;
-
-    deckStorageData.forEach((slot, index) => {
-        const caseEl = document.createElement('div');
-        caseEl.className = 'deck-case';
-        
-        const header = document.createElement('div');
-        header.className = 'deck-case-header';
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'deck-case-name-input';
-        input.value = slot.name;
-        input.addEventListener('change', (e) => {
-            updateStorageName(index, e.target.value);
-        });
-        header.appendChild(input);
-        
-        const thumbArea = document.createElement('div');
-        thumbArea.className = 'deck-case-thumbnail';
-        
-        if (slot.thumbnailSrc) {
-            const img = document.createElement('img');
-            img.src = slot.thumbnailSrc;
-            thumbArea.appendChild(img);
-            
-            const counts = document.createElement('div');
-            counts.className = 'deck-case-counts';
-            counts.textContent = `Main: ${slot.counts.main}\nEX: ${slot.counts.ex}`;
-            thumbArea.appendChild(counts);
-        } else {
-            const emptyText = document.createElement('span');
-            emptyText.className = 'empty-text';
-            emptyText.textContent = 'Empty';
-            thumbArea.appendChild(emptyText);
-        }
-        
-        const controls = document.createElement('div');
-        controls.className = 'deck-case-controls';
-        
-        const row1 = document.createElement('div');
-        row1.className = 'deck-control-row';
-        const saveP = document.createElement('button');
-        saveP.className = 'deck-storage-btn btn-save-p';
-        saveP.textContent = 'Pから登録';
-        saveP.title = '現在の自分(Player)のデッキをここに保存';
-        saveP.onclick = () => saveToStorage(index, 'player');
-        
-        const saveO = document.createElement('button');
-        saveO.className = 'deck-storage-btn btn-save-o';
-        saveO.textContent = 'Oから登録';
-        saveO.title = '現在の相手(Opponent)のデッキをここに保存';
-        saveO.onclick = () => saveToStorage(index, 'opponent');
-        
-        row1.appendChild(saveP);
-        row1.appendChild(saveO);
-        
-        const row2 = document.createElement('div');
-        row2.className = 'deck-control-row';
-        const loadP = document.createElement('button');
-        loadP.className = 'deck-storage-btn btn-load-p';
-        loadP.textContent = 'Pへ適用';
-        loadP.title = 'この内容を自分(Player)のデッキに展開';
-        loadP.onclick = () => loadFromStorage(index, 'player');
-        if(!slot.mainDeckData) loadP.style.opacity = '0.5';
-
-        const loadO = document.createElement('button');
-        loadO.className = 'deck-storage-btn btn-load-o';
-        loadO.textContent = 'Oへ適用';
-        loadO.title = 'この内容を相手(Opponent)のデッキに展開';
-        loadO.onclick = () => loadFromStorage(index, 'opponent');
-        if(!slot.mainDeckData) loadO.style.opacity = '0.5';
-
-        row2.appendChild(loadP);
-        row2.appendChild(loadO);
-        
-        controls.appendChild(row1);
-        controls.appendChild(row2);
-        
-        const deleteBtn = document.createElement('div');
-        deleteBtn.className = 'deck-case-delete';
-        deleteBtn.textContent = '×';
-        deleteBtn.title = 'このスロットを空にする';
-        deleteBtn.onclick = () => deleteFromStorage(index);
-        
-        caseEl.appendChild(header);
-        caseEl.appendChild(thumbArea);
-        caseEl.appendChild(controls);
-        caseEl.appendChild(deleteBtn);
-        
-        container.appendChild(caseEl);
-    });
-};
-
-window.saveToStorage = async function(index, source) {
-    playSe('ボタン共通.mp3');
-    
-    const label = source === 'player' ? '自分(Player)' : '相手(Opponent)';
-    const confirmMsg = `スロット${index + 1}に、現在の${label}のデッキ情報を上書き登録しますか？`;
-    
-    if (typeof showCustomConfirm === 'function') {
-        if (!await showCustomConfirm(confirmMsg)) return;
-    } else if (!confirm(confirmMsg)) return;
-    
-    const prefix = source === 'opponent' ? 'opponent-' : '';
-    
-    if (typeof extractZoneData !== 'function') return;
-    
-    const mainDeck = extractZoneData(prefix + 'deck-back-slots');
-    const sideDeck = extractZoneData(prefix + 'side-deck-back-slots');
-    
-    let thumbSrc = null;
-    let mainCount = 0;
-    
-    if (mainDeck && Array.isArray(mainDeck)) {
-        for(const cards of mainDeck) {
-            if (cards && cards.length > 0) {
-                mainCount += cards.length;
-                if (!thumbSrc) thumbSrc = cards[0].src;
-            }
-        }
-    }
-    
-    let exCount = 0;
-    if (sideDeck && Array.isArray(sideDeck)) {
-        for(const cards of sideDeck) {
-            if (cards && cards.length > 0) {
-                exCount += cards.length;
-                if (!thumbSrc) thumbSrc = cards[0].src; 
-            }
-        }
-    }
-    
-    deckStorageData[index].mainDeckData = mainDeck;
-    deckStorageData[index].exDeckData = sideDeck;
-    deckStorageData[index].thumbnailSrc = thumbSrc;
-    deckStorageData[index].counts = { main: mainCount, ex: exCount };
-    
-    playSe('カードを配置する.mp3');
-    renderDeckStorage();
-};
-
-window.loadFromStorage = async function(index, target) {
-    playSe('ボタン共通.mp3');
-    
-    const slot = deckStorageData[index];
-    if (!slot.mainDeckData && !slot.exDeckData) return;
-    
-    const label = target === 'player' ? '自分(Player)' : '相手(Opponent)';
-    const confirmMsg = `現在の${label}のデッキ・EXデッキは上書きされます。\n「${slot.name}」を適用しますか？`;
-    
-    if (typeof showCustomConfirm === 'function') {
-        if (!await showCustomConfirm(confirmMsg)) return;
-    } else if (!confirm(confirmMsg)) return;
-    
-    if (typeof saveStateForUndo === 'function') saveStateForUndo();
-    
-    const prefix = target === 'opponent' ? 'opponent-' : '';
-    
-    if (typeof clearZoneData === 'function') {
-        clearZoneData(prefix + 'deck-back-slots');
-        clearZoneData(prefix + 'side-deck-back-slots');
-    }
-    
-    if (typeof applyDataToZone === 'function') {
-        if (slot.mainDeckData) applyDataToZone(prefix + 'deck-back-slots', slot.mainDeckData);
-        if (slot.exDeckData) applyDataToZone(prefix + 'side-deck-back-slots', slot.exDeckData);
-    }
-    
-    if (typeof syncMainZoneImage === 'function') {
-        syncMainZoneImage('deck', prefix);
-        syncMainZoneImage('side-deck', prefix);
-    }
-    
-    playSe('シャッフル.mp3');
-    
-    if (typeof window.updatePlaymatState === 'function') {
-        window.updatePlaymatState();
-    }
-};
-
-window.deleteFromStorage = async function(index) {
-    playSe('ボタン共通.mp3');
-    
-    const slot = deckStorageData[index];
-    if (!slot.mainDeckData && !slot.exDeckData) return;
-
-    const confirmMsg = `スロット${index + 1}「${slot.name}」の内容を削除しますか？`;
-    
-    if (typeof showCustomConfirm === 'function') {
-        if (!await showCustomConfirm(confirmMsg)) return;
-    } else if (!confirm(confirmMsg)) return;
-    
-    deckStorageData[index] = {
-        id: `deck-slot-${index}`,
-        name: `Deck ${index + 1}`,
-        mainDeckData: null,
-        exDeckData: null,
-        thumbnailSrc: null,
-        counts: { main: 0, ex: 0 }
-    };
-    
-    renderDeckStorage();
-};
-
-window.updateStorageName = function(index, newName) {
-    if (deckStorageData[index]) {
-        deckStorageData[index].name = newName;
-    }
-};
-
-document.addEventListener('DOMContentLoaded', setupUI);

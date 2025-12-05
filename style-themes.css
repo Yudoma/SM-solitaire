@@ -41,7 +41,7 @@
     background-color: rgba(255, 182, 193, 0.9); color: #8B008B; border-color: #C71585;
 }
 .player-sadist-mode .extra-text, .opponent-sadist-mode .extra-text {
-    background-color: transparent; border-color: rgba(255, 105, 180, 0.5); color: #333;
+    background-color: rgba(255, 182, 193, 0.9); border-color: rgba(255, 105, 180, 0.5); color: #333;
 }
 .player-sadist-mode .extra-text::placeholder, .opponent-sadist-mode .extra-text::placeholder {
     color: rgba(255, 105, 180, 0.7);
@@ -103,7 +103,7 @@
     background-color: rgba(60, 9, 108, 0.9); color: #e0aaff; border-color: #9d4edd;
 }
 .player-magickers-mode .extra-text, .opponent-magickers-mode .extra-text {
-    background-color: transparent; border-color: rgba(157, 78, 221, 0.5); color: #e0aaff;
+    background-color: rgba(60, 9, 108, 0.9); border-color: rgba(157, 78, 221, 0.5); color: #e0aaff;
 }
 .player-magickers-mode .extra-text::placeholder, .opponent-magickers-mode .extra-text::placeholder {
     color: rgba(157, 78, 221, 0.7);
@@ -152,7 +152,7 @@
     background-color: rgba(74, 10, 10, 0.9); color: #ffcccc; border-color: #cd5c5c;
 }
 .player-striker-mode .extra-text, .opponent-striker-mode .extra-text {
-    background-color: transparent; border-color: rgba(205, 92, 92, 0.5); color: #ffcccc;
+    background-color: rgba(74, 10, 10, 0.9); border-color: rgba(205, 92, 92, 0.5); color: #ffcccc;
 }
 .player-striker-mode .extra-text::placeholder, .opponent-striker-mode .extra-text::placeholder {
     color: rgba(205, 92, 92, 0.7);
@@ -201,7 +201,7 @@
     background-color: #f0f0f0; color: #000; border-color: #ccc;
 }
 .player-simple-mode .extra-text, .opponent-simple-mode .extra-text {
-    background-color: transparent; border-color: rgba(102, 102, 102, 0.5); color: #000;
+    background-color: #f0f0f0; border-color: rgba(102, 102, 102, 0.5); color: #000;
 }
 .player-simple-mode .extra-text::placeholder, .opponent-simple-mode .extra-text::placeholder {
     color: #999;
@@ -253,7 +253,7 @@
     background-color: rgba(176, 196, 222, 0.9); color: #00008B; border-color: #4169E1;
 }
 .player-masochist-mode .extra-text, .opponent-masochist-mode .extra-text {
-    background-color: transparent; border-color: rgba(30, 144, 255, 0.5); color: #00008B;
+    background-color: rgba(176, 196, 222, 0.9); border-color: rgba(30, 144, 255, 0.5); color: #00008B;
 }
 .player-masochist-mode .extra-text::placeholder, .opponent-masochist-mode .extra-text::placeholder {
     color: rgba(30, 144, 255, 0.7);
