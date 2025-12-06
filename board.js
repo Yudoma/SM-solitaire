@@ -1,3 +1,54 @@
+function getImageBase64(img) {
+    if (!img) return null;
+    try {
+        if (img.src && img.src.startsWith('data:')) {
+            return img.src;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        return canvas.toDataURL('image/png');
+    } catch (e) {
+        console.warn('Base64 conversion failed for image element:', e);
+        return img.src;
+    }
+}
+
+function getUrlBase64(url) {
+    return new Promise((resolve) => {
+        if (!url) {
+            resolve(null);
+            return;
+        }
+        if (url.startsWith('data:')) {
+            resolve(url);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = url;
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            } catch (e) {
+                console.warn('Base64 conversion failed for URL:', url, e);
+                resolve(url);
+            }
+        };
+        img.onerror = () => {
+            console.warn('Image load failed for Base64 conversion:', url);
+            resolve(url);
+        };
+    });
+}
+
 window.resolveBattle = function(attackerBP, targetBP) {
     if (!currentAttackers || currentAttackers.length === 0 || !currentBattleTarget) {
         if(typeof closeBattleConfirmModal === 'function') closeBattleConfirmModal();
@@ -582,22 +633,44 @@ function updateBodyThemeClasses() {
     }
 }
 
-function exportDeck(idPrefix, fileName = 'deck') {
+async function exportDeck(idPrefix, fileName = 'deck') {
      try {
+        const owner = idPrefix ? 'opponent' : 'player';
+        
+        let customIconsBase64 = {};
+        if (typeof customIconStocks !== 'undefined' && customIconStocks[owner]) {
+            customIconsBase64[owner] = {};
+            for (const key of Object.keys(customIconStocks[owner])) {
+                if (Array.isArray(customIconStocks[owner][key])) {
+                    customIconsBase64[owner][key] = await Promise.all(
+                        customIconStocks[owner][key].map(url => getUrlBase64(url))
+                    );
+                }
+            }
+        }
+
+        let customCounterTypesBase64 = [];
+        if (typeof customCounterTypes !== 'undefined' && Array.isArray(customCounterTypes)) {
+            customCounterTypesBase64 = await Promise.all(customCounterTypes.map(async (c) => ({
+                ...c,
+                icon: await getUrlBase64(c.icon)
+            })));
+        }
+
         const exportData = {
-            deck: extractZoneData(idPrefix + 'deck-back-slots'),
-            sideDeck: extractZoneData(idPrefix + 'side-deck-back-slots'),
-            freeSpace: extractZoneData(idPrefix + 'free-space-slots'),
-            token: extractZoneData(idPrefix + 'token-zone-slots'),
+            deck: await extractZoneData(idPrefix + 'deck-back-slots', false, true),
+            sideDeck: await extractZoneData(idPrefix + 'side-deck-back-slots', false, true),
+            freeSpace: await extractZoneData(idPrefix + 'free-space-slots', false, true),
+            token: await extractZoneData(idPrefix + 'token-zone-slots', false, true),
             decorations: {
-                deck: extractZoneData(idPrefix + 'deck', true),
-                sideDeck: extractZoneData(idPrefix + 'side-deck', true),
-                grave: extractZoneData(idPrefix + 'grave', true),
-                exclude: extractZoneData(idPrefix + 'exclude', true),
-                icon: extractZoneData(idPrefix + 'icon-zone', true),
+                deck: await extractZoneData(idPrefix + 'deck', true, true),
+                sideDeck: await extractZoneData(idPrefix + 'side-deck', true, true),
+                grave: await extractZoneData(idPrefix + 'grave', true, true),
+                exclude: await extractZoneData(idPrefix + 'exclude', true, true),
+                icon: await extractZoneData(idPrefix + 'icon-zone', true, true),
             },
-            customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {},
-            customCounterTypes: typeof customCounterTypes !== 'undefined' ? customCounterTypes : []
+            customIcons: customIconsBase64,
+            customCounterTypes: customCounterTypesBase64
         };
         const jsonData = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
@@ -669,9 +742,9 @@ function importDeck(idPrefix) {
     fileInput.click();
 }
 
-function exportAllBoardData(fileName = 'sm_solitaire_board') {
+async function exportAllBoardData(fileName = 'sm_solitaire_board') {
     try {
-        const state = getAllBoardState();
+        const state = await getAllBoardState(true);
         const jsonData = JSON.stringify(state, null, 2);
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -713,7 +786,11 @@ function importAllBoardData() {
     fileInput.click();
 }
 
-function getAllBoardState() {
+function getAllBoardState(includeBinary = false) {
+    if (includeBinary) {
+        return getAllBoardStateAsync();
+    }
+
     const getSideState = (idPrefix) => {
         const zones = [
             'deck', 'grave', 'exclude', 'side-deck', 'icon-zone',
@@ -759,6 +836,89 @@ function getAllBoardState() {
             cNavi: extractZoneData('c-free-space'),
             customCounterTypes: customCounterTypes || [], 
             customIcons: typeof customIconStocks !== 'undefined' ? customIconStocks : {}, 
+            settings: {
+                bgmVolume: typeof bgmVolume !== 'undefined' ? bgmVolume : 5,
+                seVolume: typeof seVolume !== 'undefined' ? seVolume : 5,
+                seConfig: typeof seConfig !== 'undefined' ? seConfig : {},
+                effectConfig: typeof effectConfig !== 'undefined' ? effectConfig : {},
+                autoConfig: typeof autoConfig !== 'undefined' ? autoConfig : {},
+                replayWaitTime: document.getElementById('replay-wait-time-input')?.value
+            }
+        },
+        timestamp: Date.now()
+    };
+}
+
+async function getAllBoardStateAsync() {
+    const getSideStateAsync = async (idPrefix) => {
+        const zones = [
+            'deck', 'grave', 'exclude', 'side-deck', 'icon-zone',
+            'deck-back-slots', 'grave-back-slots', 'exclude-back-slots', 'side-deck-back-slots',
+            'free-space-slots', 'token-zone-slots', 'hand-zone',
+            'mana-left', 'mana-right', 'battle', 'spell', 'special1', 'special2', 'extra-image-zone'
+        ];
+        
+        const state = {};
+        for (const zoneId of zones) {
+            const fullId = idPrefix + zoneId;
+            state[zoneId] = await extractZoneData(fullId, false, true);
+        }
+
+        const smBtn = document.getElementById(idPrefix + 'sm-toggle-btn');
+        const lpVal = document.getElementById(idPrefix + 'counter-value')?.value;
+        const manaVal = document.getElementById(idPrefix + 'mana-counter-value')?.value;
+        const nameVal = document.getElementById(idPrefix + (idPrefix ? 'player-name' : 'player-name'))?.value;
+        
+        const intervalId = idPrefix ? 'opponent-auto-decrease-interval' : 'player-auto-decrease-interval';
+        const intervalVal = document.getElementById(intervalId)?.value;
+
+        state.meta = {
+            smMode: smBtn ? smBtn.dataset.mode : (idPrefix ? 'striker' : 'magickers'),
+            lp: lpVal,
+            mana: manaVal,
+            name: nameVal,
+            autoDecreaseInterval: intervalVal
+        };
+
+        return state;
+    };
+
+    let customIconsBase64 = {};
+    if (typeof customIconStocks !== 'undefined') {
+        for (const owner of ['player', 'opponent']) {
+            if (customIconStocks[owner]) {
+                customIconsBase64[owner] = {};
+                for (const key of Object.keys(customIconStocks[owner])) {
+                    if (Array.isArray(customIconStocks[owner][key])) {
+                        customIconsBase64[owner][key] = await Promise.all(
+                            customIconStocks[owner][key].map(url => getUrlBase64(url))
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    let customCounterTypesBase64 = [];
+    if (typeof customCounterTypes !== 'undefined' && Array.isArray(customCounterTypes)) {
+        customCounterTypesBase64 = await Promise.all(customCounterTypes.map(async (c) => ({
+            ...c,
+            icon: await getUrlBase64(c.icon)
+        })));
+    }
+
+    return {
+        player: await getSideStateAsync(''),
+        opponent: await getSideStateAsync('opponent-'),
+        common: {
+            turnValue: document.getElementById('common-turn-value')?.value || 1,
+            turnPlayer: document.getElementById('turn-player-select')?.value || 'first',
+            isBoardFlipped: document.body.classList.contains('board-flipped'),
+            currentStepIndex: (typeof currentStepIndex !== 'undefined') ? currentStepIndex : 0,
+            isTurnEnded: (typeof isTurnEnded !== 'undefined') ? isTurnEnded : true, 
+            cNavi: await extractZoneData('c-free-space', false, true),
+            customCounterTypes: customCounterTypesBase64, 
+            customIcons: customIconsBase64, 
             settings: {
                 bgmVolume: typeof bgmVolume !== 'undefined' ? bgmVolume : 5,
                 seVolume: typeof seVolume !== 'undefined' ? seVolume : 5,
@@ -877,7 +1037,7 @@ function restoreAllBoardState(state) {
     if (typeof window.updatePlaymatState === 'function') window.updatePlaymatState();
 }
 
-function extractZoneData(containerId, singleSlot = false) {
+function extractZoneData(containerId, singleSlot = false, includeBinary = false) {
     const container = document.getElementById(containerId);
     if (!container) return null;
     
@@ -888,34 +1048,72 @@ function extractZoneData(containerId, singleSlot = false) {
         slots = Array.from(container.querySelectorAll('.card-slot'));
     }
     
-    const data = slots.map(slot => {
-        const thumbnails = slot.querySelectorAll('.thumbnail');
-        if (thumbnails.length === 0) return null;
-        return Array.from(thumbnails).map(thumb => ({
-            src: thumb.querySelector('.card-image').src,
-            isDecoration: thumb.dataset.isDecoration === 'true',
-            isFlipped: thumb.dataset.isFlipped === 'true',
-            originalSrc: thumb.dataset.originalSrc,
-            counter: parseInt(thumb.querySelector('.card-counter-overlay').dataset.counter) || 0,
-            memo: thumb.dataset.memo || '',
-            flavor1: thumb.dataset.flavor1 || '',
-            flavor2: thumb.dataset.flavor2 || '',
-            rotation: parseInt(thumb.querySelector('.card-image').dataset.rotation) || 0,
-            isMasturbating: thumb.dataset.isMasturbating === 'true',
-            isBlocker: thumb.dataset.isBlocker === 'true',
-            isPermanent: thumb.dataset.isPermanent === 'true', 
-            ownerPrefix: thumb.dataset.ownerPrefix || '',
-            customCounters: JSON.parse(thumb.dataset.customCounters || '[]'),
-            deployedTurn: thumb.dataset.deployedTurn || null
-        }));
-    });
-    
-    if (singleSlot) {
-        const validData = data.filter(d => d);
-        return validData.length > 0 ? validData[0][0] : null; 
+    if (includeBinary) {
+        return Promise.all(slots.map(async (slot) => {
+            const thumbnails = slot.querySelectorAll('.thumbnail');
+            if (thumbnails.length === 0) return null;
+            return await Promise.all(Array.from(thumbnails).map(async (thumb) => {
+                const img = thumb.querySelector('.card-image');
+                const srcBase64 = getImageBase64(img);
+                const originalSrcBase64 = thumb.dataset.originalSrc ? await getUrlBase64(thumb.dataset.originalSrc) : undefined;
+                const flavor1Base64 = thumb.dataset.flavor1 ? await getUrlBase64(thumb.dataset.flavor1) : '';
+                const flavor2Base64 = thumb.dataset.flavor2 ? await getUrlBase64(thumb.dataset.flavor2) : '';
+
+                return {
+                    src: srcBase64,
+                    isDecoration: thumb.dataset.isDecoration === 'true',
+                    isFlipped: thumb.dataset.isFlipped === 'true',
+                    originalSrc: originalSrcBase64,
+                    counter: parseInt(thumb.querySelector('.card-counter-overlay').dataset.counter) || 0,
+                    memo: thumb.dataset.memo || '',
+                    flavor1: flavor1Base64,
+                    flavor2: flavor2Base64,
+                    rotation: parseInt(img.dataset.rotation) || 0,
+                    isMasturbating: thumb.dataset.isMasturbating === 'true',
+                    isBlocker: thumb.dataset.isBlocker === 'true',
+                    isPermanent: thumb.dataset.isPermanent === 'true', 
+                    ownerPrefix: thumb.dataset.ownerPrefix || '',
+                    customCounters: JSON.parse(thumb.dataset.customCounters || '[]'),
+                    deployedTurn: thumb.dataset.deployedTurn || null
+                };
+            }));
+        })).then(data => {
+            if (singleSlot) {
+                const validData = data.filter(d => d);
+                return validData.length > 0 ? validData[0][0] : null; 
+            }
+            return data;
+        });
+    } else {
+        const data = slots.map(slot => {
+            const thumbnails = slot.querySelectorAll('.thumbnail');
+            if (thumbnails.length === 0) return null;
+            return Array.from(thumbnails).map(thumb => ({
+                src: thumb.querySelector('.card-image').src,
+                isDecoration: thumb.dataset.isDecoration === 'true',
+                isFlipped: thumb.dataset.isFlipped === 'true',
+                originalSrc: thumb.dataset.originalSrc,
+                counter: parseInt(thumb.querySelector('.card-counter-overlay').dataset.counter) || 0,
+                memo: thumb.dataset.memo || '',
+                flavor1: thumb.dataset.flavor1 || '',
+                flavor2: thumb.dataset.flavor2 || '',
+                rotation: parseInt(thumb.querySelector('.card-image').dataset.rotation) || 0,
+                isMasturbating: thumb.dataset.isMasturbating === 'true',
+                isBlocker: thumb.dataset.isBlocker === 'true',
+                isPermanent: thumb.dataset.isPermanent === 'true', 
+                ownerPrefix: thumb.dataset.ownerPrefix || '',
+                customCounters: JSON.parse(thumb.dataset.customCounters || '[]'),
+                deployedTurn: thumb.dataset.deployedTurn || null
+            }));
+        });
+        
+        if (singleSlot) {
+            const validData = data.filter(d => d);
+            return validData.length > 0 ? validData[0][0] : null; 
+        }
+        
+        return data;
     }
-    
-    return data;
 }
 
 function clearZoneData(containerId, clearDecorations = false) {

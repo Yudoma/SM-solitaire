@@ -600,7 +600,20 @@ function handleStockItemDrop(e) {
 function saveIconStock(targetType, owner, container) {
     const items = Array.from(container.querySelectorAll('.decoration-stock-item img'));
     if (!customIconStocks[owner]) customIconStocks[owner] = {};
-    customIconStocks[owner][targetType] = items.map(img => img.src);
+    customIconStocks[owner][targetType] = items.map(img => {
+        try {
+            if (img.src.startsWith('data:')) return img.src;
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            return canvas.toDataURL('image/png');
+        } catch (e) {
+            console.warn('Image save failed:', e);
+            return img.src;
+        }
+    });
 }
 
 function updateZoneDecorationFromStock(targetType, owner, container) {
@@ -731,7 +744,7 @@ function setupModalEvents() {
     [memoFontSizeInput, memoWidthInput, memoHeightInput].forEach(input => {
         if(input) input.addEventListener('input', updateMemoEditorStyle);
     });
-    updateMemoEditorStyle(); // 初期値を適用
+    updateMemoEditorStyle(); 
 
     if (memoSaveBtn) {
         memoSaveBtn.addEventListener('click', () => {
