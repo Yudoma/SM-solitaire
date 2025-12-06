@@ -400,47 +400,32 @@ function setupGameControlEvents() {
             const playerDeckCount = playerDeckContainer ? playerDeckContainer.querySelectorAll('.thumbnail').length : 0;
 
             if (playerDeckCount === 0) {
-                let loaded = false;
-                const maxRetries = 10;
-                
-                for (let i = 0; i < maxRetries; i++) {
-                    const randomNum = Math.floor(Math.random() * 8) + 1;
-                    const sampleFileName = `sample/sample_deck_${randomNum}.json`;
+                if (typeof window.validSampleDecks !== 'undefined' && window.validSampleDecks.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * window.validSampleDecks.length);
+                    const data = window.validSampleDecks[randomIndex];
                     
-                    try {
-                        const response = await fetch(sampleFileName);
-                        if (response.ok) {
-                            const data = await response.json();
-                            await showCustomAlert(`デッキがありません。\nサンプルデッキ No.${randomNum} を読み込んで開始します。`);
-                            
-                            if (typeof clearZoneData === 'function') {
-                                clearZoneData('deck-back-slots');
-                                clearZoneData('side-deck-back-slots');
-                                clearZoneData('free-space-slots');
-                                clearZoneData('token-zone-slots');
-                            }
-                            
-                            if (typeof applyDataToZone === 'function') {
-                                if (data.deck) applyDataToZone('deck-back-slots', data.deck);
-                                if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
-                                if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
-                                if (data.token) applyDataToZone('token-zone-slots', data.token);
-                            }
-                            
-                            if (typeof syncMainZoneImage === 'function') {
-                                syncMainZoneImage('deck', '');
-                                syncMainZoneImage('side-deck', '');
-                            }
-                            loaded = true;
-                            break;
-                        }
-                    } catch (e) {
-                        console.warn(`サンプルデッキ No.${randomNum} の読み込みに失敗しました (試行 ${i+1}/${maxRetries}):`, e);
+                    await showCustomAlert(`デッキがありません。\nサンプルデッキを読み込んで開始します。`);
+                    
+                    if (typeof clearZoneData === 'function') {
+                        clearZoneData('deck-back-slots');
+                        clearZoneData('side-deck-back-slots');
+                        clearZoneData('free-space-slots');
+                        clearZoneData('token-zone-slots');
                     }
-                }
-                
-                if (!loaded) {
-                     console.warn("すべてのサンプルデッキの読み込み試行に失敗しました。");
+                    
+                    if (typeof applyDataToZone === 'function') {
+                        if (data.deck) applyDataToZone('deck-back-slots', data.deck);
+                        if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
+                        if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
+                        if (data.token) applyDataToZone('token-zone-slots', data.token);
+                    }
+                    
+                    if (typeof syncMainZoneImage === 'function') {
+                        syncMainZoneImage('deck', '');
+                        syncMainZoneImage('side-deck', '');
+                    }
+                } else {
+                    console.warn("有効なサンプルデッキが見つかりませんでした。");
                 }
             }
 

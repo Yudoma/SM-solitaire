@@ -202,3 +202,5 @@ let deckStorageData = Array.from({ length: 8 }, (_, i) => ({
     thumbnailSrc: null,
     counts: { main: 0, ex: 0 }
 }));
+
+window.validSampleDecks = [];
