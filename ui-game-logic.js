@@ -398,32 +398,72 @@ function setupGameControlEvents() {
 
             const playerDeckContainer = document.getElementById('deck-back-slots');
             const playerDeckCount = playerDeckContainer ? playerDeckContainer.querySelectorAll('.thumbnail').length : 0;
+            
+            const opponentDeckContainer = document.getElementById('opponent-deck-back-slots');
+            const opponentDeckCount = opponentDeckContainer ? opponentDeckContainer.querySelectorAll('.thumbnail').length : 0;
 
-            if (playerDeckCount === 0) {
+            if (playerDeckCount === 0 || opponentDeckCount === 0) {
                 if (typeof window.validSampleDecks !== 'undefined' && window.validSampleDecks.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * window.validSampleDecks.length);
-                    const data = window.validSampleDecks[randomIndex];
                     
-                    await showCustomAlert(`デッキがありません。\nサンプルデッキを読み込んで開始します。`);
-                    
-                    if (typeof clearZoneData === 'function') {
-                        clearZoneData('deck-back-slots');
-                        clearZoneData('side-deck-back-slots');
-                        clearZoneData('free-space-slots');
-                        clearZoneData('token-zone-slots');
+                    let msg = '';
+                    if (playerDeckCount === 0 && opponentDeckCount === 0) {
+                        msg = '双方のデッキがありません。\nサンプルデッキを読み込んで開始します。';
+                    } else if (playerDeckCount === 0) {
+                        msg = '自分(Player)のデッキがありません。\nサンプルデッキを読み込んで開始します。';
+                    } else {
+                        msg = '相手(Opponent)のデッキがありません。\nサンプルデッキを読み込んで開始します。';
                     }
                     
-                    if (typeof applyDataToZone === 'function') {
-                        if (data.deck) applyDataToZone('deck-back-slots', data.deck);
-                        if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
-                        if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
-                        if (data.token) applyDataToZone('token-zone-slots', data.token);
-                    }
+                    await showCustomAlert(msg);
                     
-                    if (typeof syncMainZoneImage === 'function') {
-                        syncMainZoneImage('deck', '');
-                        syncMainZoneImage('side-deck', '');
+                    if (playerDeckCount === 0) {
+                        const randomP = Math.floor(Math.random() * window.validSampleDecks.length);
+                        const dataP = window.validSampleDecks[randomP];
+                        
+                        if (typeof clearZoneData === 'function') {
+                            clearZoneData('deck-back-slots');
+                            clearZoneData('side-deck-back-slots');
+                            clearZoneData('free-space-slots');
+                            clearZoneData('token-zone-slots');
+                        }
+                        
+                        if (typeof applyDataToZone === 'function') {
+                            if (dataP.deck) applyDataToZone('deck-back-slots', dataP.deck);
+                            if (dataP.sideDeck) applyDataToZone('side-deck-back-slots', dataP.sideDeck);
+                            if (dataP.freeSpace) applyDataToZone('free-space-slots', dataP.freeSpace);
+                            if (dataP.token) applyDataToZone('token-zone-slots', dataP.token);
+                        }
+                        
+                        if (typeof syncMainZoneImage === 'function') {
+                            syncMainZoneImage('deck', '');
+                            syncMainZoneImage('side-deck', '');
+                        }
                     }
+
+                    if (opponentDeckCount === 0) {
+                        const randomO = Math.floor(Math.random() * window.validSampleDecks.length);
+                        const dataO = window.validSampleDecks[randomO];
+                        
+                        if (typeof clearZoneData === 'function') {
+                            clearZoneData('opponent-deck-back-slots');
+                            clearZoneData('opponent-side-deck-back-slots');
+                            clearZoneData('opponent-free-space-slots');
+                            clearZoneData('opponent-token-zone-slots');
+                        }
+                        
+                        if (typeof applyDataToZone === 'function') {
+                            if (dataO.deck) applyDataToZone('opponent-deck-back-slots', dataO.deck);
+                            if (dataO.sideDeck) applyDataToZone('opponent-side-deck-back-slots', dataO.sideDeck);
+                            if (dataO.freeSpace) applyDataToZone('opponent-free-space-slots', dataO.freeSpace);
+                            if (dataO.token) applyDataToZone('opponent-token-zone-slots', dataO.token);
+                        }
+                        
+                        if (typeof syncMainZoneImage === 'function') {
+                            syncMainZoneImage('deck', 'opponent-');
+                            syncMainZoneImage('side-deck', 'opponent-');
+                        }
+                    }
+
                 } else {
                     console.warn("有効なサンプルデッキが見つかりませんでした。");
                 }

@@ -120,7 +120,8 @@ const autoConfig = {
     'autoDuelDraw': true,
 
     'autoUntapPhase': true,
-    'msgPhaseCutin': true
+    'msgPhaseCutin': true,
+    'hideOpponentHand': false
 };
 
 const keyConfig = {

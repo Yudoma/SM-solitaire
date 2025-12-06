@@ -1106,97 +1106,32 @@ body.board-flipped .opponent-wrapper .counter-badge {
 }
 
 .extra-text::placeholder {
-
     color: #555;
-
     font-size: 0.8em;
-
 }
-
-
-
-/* Stretch player counter wrapper to fill available space */
-
-
 
 #player-counter-wrapper {
-
-
-
     flex-grow: 1;
-
-
-
     align-items: stretch;
-
-
-
 }
-
-
-
-
-
-
-
-/* Make the stat groups inside the player wrapper grow to fill the stretched height */
-
-
 
 #player-counter-wrapper .hand-counter-group {
-
-
-
     flex-grow: 1;
-
-
-
     justify-content: center;
-
-
-
 }
-
-
-
-
-
-
 
 #opponent-counter-wrapper {
-
-
-
     flex-grow: 1;
-
-
-
     align-items: stretch;
-
-
-
 }
-
-
-
-
-
-
 
 #opponent-counter-wrapper .hand-counter-group {
-
-
-
     flex-grow: 1;
-
-
-
     justify-content: center;
-
-
-
 }
 
-
-
-
+body.hide-hand-enabled.turn-player-active #opponent-hand-zone .thumbnail .card-image,
+body.hide-hand-enabled.turn-opponent-active #hand-zone .thumbnail .card-image {
+    content: url("./decoration/デッキ.png");
+    object-fit: fill; 
+}

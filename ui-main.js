@@ -694,7 +694,8 @@ window.setupUI = function() {
             'msgStartPhase': '表示:ターン開始説明',
             
             'autoUntapPhase': 'アンタップステップ自動処理',
-            'msgPhaseCutin': 'ステップカットイン表示'
+            'msgPhaseCutin': 'ステップカットイン表示',
+            'hideOpponentHand': '相手の手札を非公開'
         };
         
         Object.keys(autoConfig).forEach(key => {
@@ -707,8 +708,17 @@ window.setupUI = function() {
             input.type = 'checkbox';
             input.checked = autoConfig[key];
             input.dataset.autoKey = key;
+            
+            if (key === 'hideOpponentHand' && autoConfig[key]) {
+                document.body.classList.add('hide-hand-enabled');
+            }
+
             input.addEventListener('change', (e) => {
                 autoConfig[key] = e.target.checked;
+                if (key === 'hideOpponentHand') {
+                    if (e.target.checked) document.body.classList.add('hide-hand-enabled');
+                    else document.body.classList.remove('hide-hand-enabled');
+                }
             });
             
             const span = document.createElement('span');
@@ -1583,5 +1593,157 @@ window.setupUI = function() {
                 commonDrawer.classList.remove('open');
             });
         }
+    }
+};
+
+function initKeyConfigUI() {
+    const container = document.getElementById('key-config-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const keyLabels = {
+        'toggleDrawer': 'ドロワー開閉',
+        'toggleCommon': '共通メニュー開閉',
+        'toggleBank': 'バンク開閉',
+        'draw': '1ドロー',
+        'stepForward': 'ステップ進行',
+        'tap': 'タップ',
+        'flip': '反転',
+        'toGrave': '墓地へ',
+        'memo': 'メモ編集',
+        'toggleNav': 'ナビ切替',
+        'flipBoard': '盤面反転',
+        'undo': '元に戻す',
+        'redo': 'やり直し',
+        
+        'phaseStart': 'ターン開始',
+        'phaseDraw': 'ドローステップ',
+        'phaseMana': 'マナステップ',
+        'phaseMain': 'メインステップ',
+        'phaseBattle': 'バトルステップ',
+        'phaseEnd': 'エンドステップ',
+        'turnChange': 'ターンプレイヤー切替',
+        'openDeck': 'デッキを開く',
+        'openGrave': '墓地を開く',
+        'openExclude': '除外を開く',
+        'openSideDeck': 'EXデッキを開く',
+        'openBank': 'バンクを開く',
+        'rollDice': 'ダイスロール',
+        'tossCoin': 'コイントス'
+    };
+
+    if (typeof keyConfig !== 'undefined') {
+        Object.keys(keyConfig).forEach(action => {
+            const label = keyLabels[action] || action;
+            const item = createKeyConfigItem(action, label, keyConfig[action]);
+            container.appendChild(item);
+        });
+    }
+}
+
+function createKeyConfigItem(action, label, currentKey) {
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.marginBottom = '5px';
+    div.style.borderBottom = '1px solid #555';
+    div.style.paddingBottom = '2px';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+    labelSpan.style.fontSize = '0.9em';
+    labelSpan.style.color = '#ccc';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentKey;
+    input.style.width = '60px';
+    input.style.textAlign = 'center';
+    input.style.backgroundColor = '#444';
+    input.style.color = '#fff';
+    input.style.border = '1px solid #666';
+    input.style.borderRadius = '3px';
+    input.readOnly = true;
+    input.style.cursor = 'pointer';
+
+    input.addEventListener('click', () => {
+        input.value = 'Press...';
+        input.style.backgroundColor = '#ffcc00';
+        input.style.color = '#333';
+        
+        const keyHandler = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            let newKey = e.key;
+            if (newKey === ' ') newKey = 'Space';
+            
+            updateKeyConfig(action, newKey);
+            input.value = newKey;
+            
+            input.style.backgroundColor = '#444';
+            input.style.color = '#fff';
+            document.removeEventListener('keydown', keyHandler);
+        };
+        document.addEventListener('keydown', keyHandler, { once: true });
+    });
+
+    div.appendChild(labelSpan);
+    div.appendChild(input);
+    return div;
+}
+
+function updateKeyConfig(action, newKey) {
+    if (typeof keyConfig !== 'undefined') {
+        keyConfig[action] = newKey;
+    }
+}
+
+window.updateSettingsUIFromState = function() {
+    if (bgmVolumeSlider && bgmVolumeVal && typeof bgmVolume !== 'undefined') {
+        bgmVolumeSlider.value = bgmVolume;
+        bgmVolumeVal.textContent = bgmVolume;
+    }
+    if (seVolumeSlider && seVolumeVal && typeof seVolume !== 'undefined') {
+        seVolumeSlider.value = seVolume;
+        seVolumeVal.textContent = seVolume;
+    }
+    
+    const seContainer = document.getElementById('se-settings-container');
+    if (seContainer && typeof seConfig !== 'undefined') {
+        const checkboxes = seContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(box => {
+            const seName = box.dataset.seName;
+            if (seName && typeof seConfig[seName] !== 'undefined') {
+                box.checked = seConfig[seName];
+            }
+        });
+    }
+    
+    const effectContainer = document.getElementById('effect-settings-container');
+    if (effectContainer && typeof effectConfig !== 'undefined') {
+        const checkboxes = effectContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(box => {
+            const key = box.dataset.effectKey;
+            if (key && typeof effectConfig[key] !== 'undefined') {
+                box.checked = effectConfig[key];
+            }
+        });
+    }
+
+    const autoContainer = document.getElementById('auto-config-container');
+    if (autoContainer && typeof autoConfig !== 'undefined') {
+        const checkboxes = autoContainer.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(box => {
+            const key = box.dataset.autoKey;
+            if (key && typeof autoConfig[key] !== 'undefined') {
+                box.checked = autoConfig[key];
+                if (key === 'hideOpponentHand') {
+                    if (autoConfig[key]) document.body.classList.add('hide-hand-enabled');
+                    else document.body.classList.remove('hide-hand-enabled');
+                }
+            }
+        });
     }
 };

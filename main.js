@@ -33,9 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeBoard('.opponent-wrapper', 'opponent-');
 
     setTimeout(async () => {
-        const playerDeckContainer = document.getElementById('deck-back-slots');
-        const hasCards = playerDeckContainer ? playerDeckContainer.querySelectorAll('.thumbnail').length > 0 : false;
-
         if (typeof window.validSampleDecks === 'undefined') {
             window.validSampleDecks = [];
         }
@@ -57,36 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         await Promise.all(loadPromises);
-
-        if (!hasCards && window.validSampleDecks.length > 0) {
-            const randomIndex = Math.floor(Math.random() * window.validSampleDecks.length);
-            const data = window.validSampleDecks[randomIndex];
-
-            if (typeof clearZoneData === 'function') {
-                clearZoneData('deck-back-slots');
-                clearZoneData('side-deck-back-slots');
-                clearZoneData('free-space-slots');
-                clearZoneData('token-zone-slots');
-            }
-            
-            if (typeof applyDataToZone === 'function') {
-                if (data.deck) applyDataToZone('deck-back-slots', data.deck);
-                if (data.sideDeck) applyDataToZone('side-deck-back-slots', data.sideDeck);
-                if (data.freeSpace) applyDataToZone('free-space-slots', data.freeSpace);
-                if (data.token) applyDataToZone('token-zone-slots', data.token);
-            }
-            
-            if (typeof syncMainZoneImage === 'function') {
-                syncMainZoneImage('deck', '');
-                syncMainZoneImage('side-deck', '');
-            }
-            
-            if (typeof window.updatePlaymatState === 'function') {
-                window.updatePlaymatState();
-            }
-        } else if (!hasCards) {
-            console.warn("有効なサンプルデッキが見つかりませんでした。");
-        }
     }, 500); 
 
 });
