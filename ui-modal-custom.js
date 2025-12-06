@@ -747,13 +747,15 @@ function setupModalEvents() {
     updateMemoEditorStyle(); 
 
     if (memoSaveBtn) {
-        memoSaveBtn.addEventListener('click', () => {
+        memoSaveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             performMemoSave();
         });
     }
     if (memoCancelBtn) {
-        memoCancelBtn.addEventListener('click', () => {
+        memoCancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             performMemoCancel();
         });
@@ -770,13 +772,15 @@ function setupModalEvents() {
     });
 
     if (flavorCancelBtn) {
-        flavorCancelBtn.addEventListener('click', () => {
+        flavorCancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             closeFlavorEditor();
         });
     }
     if(flavorSaveBtn) {
-        flavorSaveBtn.addEventListener('click', () => {
+        flavorSaveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             closeFlavorEditor();
         });
@@ -827,13 +831,15 @@ function setupModalEvents() {
     }
     
     if (customCounterCloseBtn) {
-        customCounterCloseBtn.addEventListener('click', () => {
+        customCounterCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             closeCustomCounterModal();
         });
     }
     if(customCounterSaveBtn) {
-        customCounterSaveBtn.addEventListener('click', () => {
+        customCounterSaveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             playSe('ボタン共通.mp3');
             closeCustomCounterModal();
         });
