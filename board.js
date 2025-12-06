@@ -1325,3 +1325,69 @@ window.updateSummoningSicknessVisuals = function() {
         }
     });
 };
+
+async function exportSingleCard(thumbnailElement) {
+    if (!thumbnailElement) return;
+
+    const imgElement = thumbnailElement.querySelector('.card-image');
+    // メイン画像のBase64化
+    const srcBase64 = getImageBase64(imgElement);
+    
+    // その他の画像のBase64化
+    const originalSrcBase64 = thumbnailElement.dataset.originalSrc ? await getUrlBase64(thumbnailElement.dataset.originalSrc) : null;
+    const flavor1Base64 = thumbnailElement.dataset.flavor1 ? await getUrlBase64(thumbnailElement.dataset.flavor1) : '';
+    const flavor2Base64 = thumbnailElement.dataset.flavor2 ? await getUrlBase64(thumbnailElement.dataset.flavor2) : '';
+
+    // カスタムカウンター情報の収集と画像Base64化
+    const cardCounterIds = JSON.parse(thumbnailElement.dataset.customCounters || '[]');
+    let cardCustomCounterTypes = [];
+    if (cardCounterIds.length > 0 && typeof customCounterTypes !== 'undefined') {
+        const uniqueIds = [...new Set(cardCounterIds)];
+        const relevantTypes = customCounterTypes.filter(c => uniqueIds.includes(String(c.id)));
+        
+        cardCustomCounterTypes = await Promise.all(relevantTypes.map(async (c) => ({
+            ...c,
+            icon: await getUrlBase64(c.icon)
+        })));
+    }
+
+    const cardData = {
+        src: srcBase64,
+        isDecoration: thumbnailElement.dataset.isDecoration === 'true',
+        isFlipped: thumbnailElement.dataset.isFlipped === 'true',
+        originalSrc: originalSrcBase64,
+        counter: parseInt(thumbnailElement.querySelector('.card-counter-overlay')?.dataset.counter) || 0,
+        memo: thumbnailElement.dataset.memo || '',
+        flavor1: flavor1Base64,
+        flavor2: flavor2Base64,
+        rotation: parseInt(imgElement?.dataset.rotation) || 0,
+        isMasturbating: thumbnailElement.dataset.isMasturbating === 'true',
+        isBlocker: thumbnailElement.dataset.isBlocker === 'true',
+        isPermanent: thumbnailElement.dataset.isPermanent === 'true',
+        ownerPrefix: thumbnailElement.dataset.ownerPrefix || '',
+        customCounters: cardCounterIds,
+        deployedTurn: thumbnailElement.dataset.deployedTurn || null,
+        customCounterTypes: cardCustomCounterTypes // 定義情報を同梱
+    };
+
+    let fileName = 'card_data';
+    const nameMatch = cardData.memo.match(/\[カード名:(.*?)\]/);
+    if (nameMatch && nameMatch[1]) {
+        fileName = nameMatch[1].trim();
+    }
+
+    const userInput = typeof showCustomPrompt === 'function' 
+        ? await showCustomPrompt("保存するファイル名を入力してください", fileName)
+        : prompt("保存するファイル名を入力してください", fileName);
+
+    if (!userInput) return;
+
+    const jsonData = JSON.stringify(cardData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${userInput}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
